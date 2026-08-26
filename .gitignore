@@ -1,0 +1,37 @@
+# =========================
+# Variáveis de Ambiente
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Backend (Python / FastAPI)
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# =========================
+# Frontend (Geral / Node)
+# =========================
+# O frontend já tem seu próprio .gitignore, mas é bom garantir na raiz
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# =========================
+# SO e Editores (IDEs)
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
