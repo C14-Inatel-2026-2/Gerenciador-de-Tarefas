@@ -1,12 +1,18 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Importe o hook
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  const navigate = useNavigate(); // 2. Inicialize o hook
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Dados capturados para envio:', { email, password });
+    
+    // 3. Redireciona para o Dashboard após simular o envio
+    navigate('/dashboard');
   };
 
   return (
