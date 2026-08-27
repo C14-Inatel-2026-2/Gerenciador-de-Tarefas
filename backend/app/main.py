@@ -4,9 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.routers import tasks
 
-# Cria as tabelas no banco (se ainda não existirem).
-# Isso é suficiente pra começar; mais pra frente o time pode migrar
-# para Alembic (migrations versionadas).
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
