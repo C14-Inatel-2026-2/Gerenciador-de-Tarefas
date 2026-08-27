@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.database import Base, get_db
 
-# Banco SQLite separado, só para os testes (em memória).
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
 
 engine = create_engine(
