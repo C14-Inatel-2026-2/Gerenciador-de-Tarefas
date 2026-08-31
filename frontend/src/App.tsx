@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Login } from './pages/login';
-import { Dashboard } from './pages/Dashboard';
+import { Home } from './pages/Home';
 
 function App() {
   return (
@@ -9,8 +9,8 @@ function App() {
         {/* Rota inicial carrega o Login */}
         <Route path="/" element={<Login />} />
         
-        {/* Rota /dashboard carrega o Dashboard */}
-        <Route path="/dashboard" element={<Dashboard />} />
+        {/* Rota /home carrega o Home */}
+        <Route path="/home" element={<Home />} />
       </Routes>
     </BrowserRouter>
   );

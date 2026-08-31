@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function Dashboard() {
+export function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [titulo, setTitulo] = useState('');
@@ -9,14 +9,37 @@ export function Dashboard() {
 
   const nomeUsuario = 'Igor';
 
-  const handleAddTarefa = (e: React.FormEvent) => {
+  const handleAddTarefa = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Nova tarefa capturada:', { titulo, prioridade, descricao });
     
-    setTitulo('');
-    setDescricao('');
-    setPrioridade('media');
-    setIsModalOpen(false);
+    try {
+      const response = await fetch('http://localhost:8000/tasks/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: titulo,
+          description: descricao,
+          priority: prioridade,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao criar tarefa');
+      }
+
+      const newTask = await response.json();
+      console.log('Nova tarefa criada:', newTask);
+      
+      setTitulo('');
+      setDescricao('');
+      setPrioridade('media');
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao criar tarefa. Verifique a conexão com a API.');
+    }
   };
 
   return (

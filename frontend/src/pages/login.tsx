@@ -1,22 +1,21 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // 1. Importe o hook
+import { useNavigate } from 'react-router-dom';
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  const navigate = useNavigate(); // 2. Inicialize o hook
+  const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Dados capturados para envio:', { email, password });
     
-    // 3. Redireciona para o Dashboard após simular o envio
-    navigate('/dashboard');
+
+    navigate('/Home');
   };
 
   return (
-    // Adicionei flex-col aqui para empilhar o título e o card
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 px-4">
       
       {/* Título do Projeto */}
