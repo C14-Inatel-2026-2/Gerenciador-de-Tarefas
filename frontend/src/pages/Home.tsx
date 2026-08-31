@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function Dashboard() {
+export function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [titulo, setTitulo] = useState('');
