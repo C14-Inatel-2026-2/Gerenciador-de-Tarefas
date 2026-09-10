@@ -2,6 +2,16 @@ import type { PrioridadeTarefa, StatusTarefa, Tarefa } from '../types';
 
 export const TASKS_URL = 'http://localhost:8000/tasks/';
 
+export async function deleteTask(id: string): Promise<void> {
+  const response = await fetch(`${TASKS_URL}${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error(`Não foi possível excluir a tarefa (HTTP ${response.status}).`);
+  }
+  // DELETE retorna 204, sem corpo JSON.
+}
+
 export interface ApiTask {
   id: number;
   title: string;

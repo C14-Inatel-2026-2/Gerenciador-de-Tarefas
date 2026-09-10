@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { clearSession, useSession } from '../auth/session';
 import { TaskCard } from '../components/TaskCard';
-import { getTasks, TASKS_URL, toTarefa } from '../services/tasks';
+import { deleteTask, getTasks, TASKS_URL, toTarefa } from '../services/tasks';
 import type { Tarefa } from '../types';
 
 export function Home() {
@@ -42,6 +42,11 @@ export function Home() {
 
   const session = useSession();
   const nomeUsuario = session?.email.split('@')[0] ?? '';
+
+  const handleDeleteTarefa = async (id: string) => {
+    await deleteTask(id);
+    setTarefas((current) => current.filter((tarefa) => tarefa.id !== id));
+  };
 
   const handleAddTarefa = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +115,9 @@ export function Home() {
           </div>
         ) : tarefas.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            {tarefas.map((tarefa) => <TaskCard key={tarefa.id} tarefa={tarefa} />)}
+            {tarefas.map((tarefa) => (
+              <TaskCard key={tarefa.id} tarefa={tarefa} onDelete={handleDeleteTarefa} />
+            ))}
           </div>
         ) : (
         <div className="flex h-64 items-center justify-center rounded-xl border-2 border-dashed border-slate-700 bg-slate-800/30">
