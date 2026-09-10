@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { clearSession, useSession } from '../auth/session';
 
 export function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -7,7 +8,8 @@ export function Home() {
   const [prioridade, setPrioridade] = useState('media');
   const [descricao, setDescricao] = useState('');
 
-  const nomeUsuario = 'Igor';
+  const session = useSession();
+  const nomeUsuario = session?.email.split('@')[0] ?? '';
 
   const handleAddTarefa = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +51,13 @@ export function Home() {
           {/* Título atualizado com o nome do usuário */}
           <h1 className="text-3xl font-extrabold text-white">Olá, {nomeUsuario}!</h1>
           
+          <button
+            type="button"
+            onClick={clearSession}
+            className="rounded-lg px-4 py-2 font-semibold text-slate-300 hover:bg-slate-800"
+          >
+            Sair
+          </button>
           <button 
             onClick={() => setIsModalOpen(true)}
             className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white shadow-md hover:bg-blue-700 transition-colors"
