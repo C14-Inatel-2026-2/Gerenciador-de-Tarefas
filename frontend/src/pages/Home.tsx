@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import { clearSession, useSession } from '../auth/session';
 import { TaskCard } from '../components/TaskCard';
-import { deleteTask, getTasks, TASKS_URL, toTarefa } from '../services/tasks';
+import { deleteTask, getTasks, TASKS_URL, toTarefa, updateTask } from '../services/tasks';
+import type { TaskUpdate } from '../services/tasks';
 import type { Tarefa } from '../types';
 
 export function Home() {
+  const handleUpdateTarefa = async (id: string, changes: TaskUpdate) => {
+    const updated = await updateTask(id, changes);
+    setTarefas((current) => current.map((tarefa) => tarefa.id === id ? updated : tarefa));
+  };
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,7 +121,7 @@ export function Home() {
         ) : tarefas.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {tarefas.map((tarefa) => (
-              <TaskCard key={tarefa.id} tarefa={tarefa} onDelete={handleDeleteTarefa} />
+              <TaskCard key={tarefa.id} tarefa={tarefa} onDelete={handleDeleteTarefa} onUpdate={handleUpdateTarefa} />
             ))}
           </div>
         ) : (

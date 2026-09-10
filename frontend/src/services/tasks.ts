@@ -21,6 +21,19 @@ export interface ApiTask {
   due_date: string | null;
 }
 
+export type TaskUpdate = Partial<Pick<ApiTask, 'title' | 'description' | 'priority' | 'status'>>;
+
+// Contrato proposto: PATCH parcial retorna a tarefa atualizada (TaskOut).
+export async function updateTask(id: string, changes: TaskUpdate): Promise<Tarefa> {
+  const response = await fetch(`${TASKS_URL}${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(changes),
+  });
+  if (!response.ok) throw new Error('Não foi possível atualizar a tarefa.');
+  return toTarefa(await response.json());
+}
+
 export function toTarefa(task: ApiTask): Tarefa {
   return {
     id: String(task.id),
