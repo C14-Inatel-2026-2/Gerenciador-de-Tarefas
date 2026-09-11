@@ -17,6 +17,15 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
     return db_task
 
 
+@router.get("/{task_id}", response_model=schemas.TaskOut)
+def get_task(task_id: int, db: Session = Depends(get_db)):
+    """Busca uma tarefa pelo id."""
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+    return task
+
+
 @router.delete("/{task_id}", status_code=204)
 def delete_task(task_id: int, db: Session = Depends(get_db)):
     """Remove uma tarefa pelo id."""
