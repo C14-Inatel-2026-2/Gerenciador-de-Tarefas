@@ -1,19 +1,63 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { clearSession, useSession } from '../auth/session';
+import { TaskCard } from '../components/TaskCard';
+import { deleteTask, getTasks, TASKS_URL, toTarefa, updateTask } from '../services/tasks';
+import type { TaskUpdate } from '../services/tasks';
+import type { Tarefa } from '../types';
 
 export function Home() {
+  const handleUpdateTarefa = async (id: string, changes: TaskUpdate) => {
+    const updated = await updateTask(id, changes);
+    setTarefas((current) => current.map((tarefa) => tarefa.id === id ? updated : tarefa));
+  };
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    getTasks(controller.signal)
+      .then((tasks) => {
+        if (!controller.signal.aborted) setTarefas(tasks);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setLoadError('Não foi possível carregar as tarefas. Verifique a conexão com a API e tente novamente.');
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [loadAttempt]);
+
+  const retryLoad = () => {
+    setLoadError('');
+    setIsLoading(true);
+    setLoadAttempt((attempt) => attempt + 1);
+  };
   
   const [titulo, setTitulo] = useState('');
   const [prioridade, setPrioridade] = useState('media');
   const [descricao, setDescricao] = useState('');
 
-  const nomeUsuario = 'Igor';
+  const session = useSession();
+  const nomeUsuario = session?.email.split('@')[0] ?? '';
+
+  const handleDeleteTarefa = async (id: string) => {
+    await deleteTask(id);
+    setTarefas((current) => current.filter((tarefa) => tarefa.id !== id));
+  };
 
   const handleAddTarefa = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:8000/tasks/', {
+      const response = await fetch(TASKS_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,7 +74,7 @@ export function Home() {
       }
 
       const newTask = await response.json();
-      console.log('Nova tarefa criada:', newTask);
+      setTarefas((current) => [...current, toTarefa(newTask)]);
       
       setTitulo('');
       setDescricao('');
@@ -49,7 +93,15 @@ export function Home() {
           {/* Título atualizado com o nome do usuário */}
           <h1 className="text-3xl font-extrabold text-white">Olá, {nomeUsuario}!</h1>
           
+          <button
+            type="button"
+            onClick={clearSession}
+            className="rounded-lg px-4 py-2 font-semibold text-slate-300 hover:bg-slate-800"
+          >
+            Sair
+          </button>
           <button 
+            disabled={isLoading}
             onClick={() => setIsModalOpen(true)}
             className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white shadow-md hover:bg-blue-700 transition-colors"
           >
@@ -57,9 +109,26 @@ export function Home() {
           </button>
         </header>
 
+        {isLoading ? (
+          <p role="status" className="py-12 text-center text-slate-400">Carregando tarefas...</p>
+        ) : loadError ? (
+          <div role="alert" className="rounded-xl border border-red-500/30 bg-slate-800 p-6 text-center">
+            <p className="text-red-400">{loadError}</p>
+            <button type="button" onClick={retryLoad} className="mt-4 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
+              Tentar novamente
+            </button>
+          </div>
+        ) : tarefas.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {tarefas.map((tarefa) => (
+              <TaskCard key={tarefa.id} tarefa={tarefa} onDelete={handleDeleteTarefa} onUpdate={handleUpdateTarefa} />
+            ))}
+          </div>
+        ) : (
         <div className="flex h-64 items-center justify-center rounded-xl border-2 border-dashed border-slate-700 bg-slate-800/30">
           <p className="text-slate-400">O quadro está limpo. Clique no botão acima para começar!</p>
         </div>
+        )}
         
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
