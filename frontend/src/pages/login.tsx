@@ -1,18 +1,25 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
+import { saveSession, useSession } from '../auth/session';
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  const navigate = useNavigate();
+  const session = useSession();
+  const [error, setError] = useState('');
+
+  if (session) return <Navigate to="/dashboard" replace />;
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Dados capturados para envio:', { email, password });
-    
-
-    navigate('/Home');
+    setError('');
+    try {
+      // Login simulado até a integração com a API de autenticação.
+      saveSession({ email: email.trim() });
+    } catch {
+      setError('Não foi possível guardar a sessão. Permita o armazenamento no navegador e tente novamente.');
+    }
   };
 
   return (
@@ -30,6 +37,7 @@ export function Login() {
         </h2>
         
         <form onSubmit={handleLogin} className="space-y-5">
+          {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
           {/* Campo de E-mail */}
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-300">

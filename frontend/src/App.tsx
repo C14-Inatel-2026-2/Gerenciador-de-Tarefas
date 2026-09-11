@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/login';
 import { Home } from './pages/Home';
 
@@ -9,8 +10,10 @@ function App() {
         {/* Rota inicial carrega o Login */}
         <Route path="/" element={<Login />} />
         
-        {/* Rota /home carrega o Home */}
-        <Route path="/home" element={<Home />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Home />} />
+          <Route path="/home" element={<Navigate to="/dashboard" replace />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
