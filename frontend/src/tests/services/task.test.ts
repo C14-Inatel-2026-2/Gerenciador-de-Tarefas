@@ -1,6 +1,6 @@
 import{afterEach, describe, expect, it, vi} from 'vitest';
-import{deleteTask, getTasks, TASKS_URL, toTarefa} from './tasks';
-import type {ApiTask} from './tasks';
+import{deleteTask, getTasks, TASKS_URL, toTarefa} from '../../services/tasks';
+import type {ApiTask} from '../../services/tasks';
 
 //Testes Unitários
 
