@@ -1,0 +1,50 @@
+﻿pipeline {
+    agent any
+
+    stages {
+        stage('Instalar dependencias') {
+            steps {
+                dir('frontend') {
+                    dir('reports') { deleteDir() }
+                    dir('coverage') { deleteDir() }
+                    script {
+                        if (isUnix()) {
+                            sh 'npm ci'
+                        } else {
+                            bat 'npm ci'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Executar testes com cobertura') {
+            steps {
+                dir('frontend') {
+                    script {
+                        if (isUnix()) {
+                            sh 'npm run test:ci'
+                        } else {
+                            bat 'npm run test:ci'
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Publica os resultados mesmo quando algum teste falha.
+    post {
+        always {
+            junit 'frontend/reports/junit.xml'
+            publishHTML(target: [
+                reportDir: 'frontend/coverage',
+                reportFiles: 'index.html',
+                reportName: 'Cobertura do frontend',
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                allowMissing: false
+            ])
+        }
+    }
+}
