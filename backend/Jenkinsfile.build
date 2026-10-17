@@ -1,0 +1,31 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Build backend') {
+            agent {
+                docker { image 'python:3.12-slim' }
+            }
+            steps {
+                dir('backend') {
+                    // venv dentro do workspace evita problemas de permissão no container
+                    sh '''
+                        python -m venv .venv
+                        . .venv/bin/activate
+                        pip install --no-cache-dir -r requirements.txt
+                        # Falha o build se algum arquivo tiver erro de sintaxe
+                        python -m compileall -q app
+                        # Empacota só o que o deploy precisa
+                        mkdir -p dist
+                        tar czf dist/backend.tar.gz app requirements.txt
+                    '''
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'backend/dist/backend.tar.gz', fingerprint: true
+                }
+            }
+        }
+    }
+}
