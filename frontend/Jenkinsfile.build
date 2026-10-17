@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+
+    environment {
+        CI = 'true'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                dir('frontend') {
+                    script {
+                        if (isUnix()) {
+                            sh 'npm ci || npm install'
+                        } else {
+                            bat 'npm ci || npm install'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Typecheck & Build') {
+            steps {
+                dir('frontend') {
+                    script {
+                        if (isUnix()) {
+                            sh 'npm run build'
+                        } else {
+                            bat 'npm run build'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                archiveArtifacts artifacts: 'frontend/dist/**', allowEmptyArchive: false, fingerprint: true
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build do frontend concluido com sucesso.'
+        }
+        failure {
+            echo 'Falha no build do frontend.'
+        }
+    }
+}
