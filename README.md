@@ -49,11 +49,15 @@ Instruções detalhadas de instalação e execução de cada parte estão nos re
 | RNF07 | **Compatibilidade:** a interface deve ser responsiva e funcionar nos principais navegadores modernos (Chrome, Firefox, Edge). |
 | RNF08 | **Desempenho:** operações simples da API (criar, buscar, excluir uma tarefa) devem responder em menos de 1 segundo em condições normais de uso. |
 
+## Histórias de Usuário
+| US1 | Como usuário, quero cadastrar tarefas com título, descrição e prioridade para organizar minhas atividades. |
+| US2 | Como usuário, quero visualizar minhas tarefas em um painel para acompanhar minhas atividades. |
+
 ## Equipe
 
 Grupo C14 — Inatel — 2026/2.
 
 - Fernando Faluxis
-- Igor Cauvilla
+- Igor Henrique
 - João Pedro Moreira
 - Hiago Marques
