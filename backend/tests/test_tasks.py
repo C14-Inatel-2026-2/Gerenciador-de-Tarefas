@@ -37,6 +37,27 @@ def test_create_task_without_title_fails(client):
     assert response.status_code == 422
 
 
+def test_get_task_success(client):
+    """Deve buscar uma tarefa existente pelo id."""
+    create_response = client.post("/tasks/", json={"title": "Tarefa para buscar"})
+    task_id = create_response.json()["id"]
+
+    response = client.get(f"/tasks/{task_id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == task_id
+    assert data["title"] == "Tarefa para buscar"
+
+
+def test_get_task_not_found(client):
+    """Buscar um id que não existe deve retornar 404."""
+    response = client.get("/tasks/9999")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Tarefa não encontrada"
+
+
 def test_delete_task_success(client):
     """Deve remover uma tarefa existente e retornar 204."""
     create_response = client.post("/tasks/", json={"title": "Tarefa para deletar"})

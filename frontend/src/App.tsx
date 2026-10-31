@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/login';
-import { Dashboard } from './pages/Dashboard';
+import { Home } from './pages/Home';
 
 function App() {
   return (
@@ -9,8 +10,10 @@ function App() {
         {/* Rota inicial carrega o Login */}
         <Route path="/" element={<Login />} />
         
-        {/* Rota /dashboard carrega o Dashboard */}
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Home />} />
+          <Route path="/home" element={<Navigate to="/dashboard" replace />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

@@ -1,0 +1,39 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Testes backend com cobertura') {
+            agent {
+                docker { image 'python:3.12-slim' }
+            }
+            steps {
+                dir('backend') {
+                    sh 'pip install --no-cache-dir -r requirements.txt'
+                    sh 'mkdir -p reports'
+                    sh '''
+                        pytest \
+                            --junitxml=reports/junit.xml \
+                            --cov=app \
+                            --cov-report=html:coverage \
+                            --cov-report=xml:coverage.xml \
+                            --cov-report=term-missing
+                    '''
+                }
+            }
+            // Publica os resultados mesmo quando algum teste falha.
+            post {
+                always {
+                    junit 'backend/reports/junit.xml'
+                    publishHTML(target: [
+                        reportDir: 'backend/coverage',
+                        reportFiles: 'index.html',
+                        reportName: 'Cobertura do backend',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true,
+                        allowMissing: false
+                    ])
+                }
+            }
+        }
+    }
+}

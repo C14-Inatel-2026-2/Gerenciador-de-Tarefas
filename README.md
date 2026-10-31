@@ -49,24 +49,14 @@ Instruções detalhadas de instalação e execução de cada parte estão nos re
 | RNF07 | **Compatibilidade:** a interface deve ser responsiva e funcionar nos principais navegadores modernos (Chrome, Firefox, Edge). |
 | RNF08 | **Desempenho:** operações simples da API (criar, buscar, excluir uma tarefa) devem responder em menos de 1 segundo em condições normais de uso. |
 
-
 ## Histórias de Usuário
 
-| Código | História de Usuário |
-| --- | --- |
-| US1 | Como usuário, quero cadastrar tarefas com título, descrição e prioridade para organizar minhas atividades. |
-| US2 | Como usuário, quero visualizar minhas tarefas em um painel para acompanhar minhas atividades. |
-
-### US3 — Entrar no sistema com login
-
-**Como** usuário, **quero** entrar no sistema com e-mail e senha **para** que apenas eu acesse o meu painel de tarefas.
-
-**Critérios de aceite**
-
-- **Dado** que informei e-mail e senha corretos, **quando** confirmo o login, **então** sou levado ao painel de tarefas.
-- **Dado** que informei e-mail ou senha incorretos, **quando** confirmo o login, **então** vejo uma mensagem de erro e permaneço na tela de login.
-- **Dado** que não estou autenticado, **quando** tento abrir o painel diretamente, **então** sou redirecionado para a tela de login.
-- **Dado** que o e-mail ou a senha estão em branco, **quando** tento entrar, **então** o sistema não envia o login e avisa que os campos são obrigatórios.
+| Código | História de Usuário | Critérios de aceite |
+| :---: | :--- | :--- |
+| **US1** | Como usuário, quero cadastrar tarefas com título, descrição e prioridade para organizar minhas atividades. | **1.** Dado que estou no painel, quando informo um título e confirmo, então a tarefa é criada e aparece no painel com status "pendente".<br><br>**2.** Dado que não informei prioridade, quando salvo a tarefa, então ela recebe a prioridade "média" por padrão.<br><br>**3.** Dado que deixei o título vazio, quando tento salvar, então o sistema rejeita o cadastro e informa que o título é obrigatório.<br><br>**4.** Dado que escolhi a prioridade "alta", quando salvo a tarefa, então ela é exibida com a prioridade "alta". |
+| **US2** | Como usuário, quero visualizar minhas tarefas em um painel para acompanhar minhas atividades. | **1.** Dado que existem tarefas cadastradas, quando abro o painel, então todas elas são exibidas agrupadas por status (pendente, em andamento, concluída).<br><br>**2.** Dado que cada tarefa é exibida, então vejo seu título, descrição e prioridade.<br><br>**3.** Dado que ainda não há tarefas, quando abro o painel, então vejo uma mensagem indicando que não há tarefas cadastradas.<br><br>**4.** Dado que as tarefas estão sendo carregadas, então vejo um indicador de carregamento. |
+| **US3** | Como usuário, quero entrar no sistema com e-mail e senha para que apenas eu acesse o meu painel de tarefas. | **1.** Dado que informei e-mail e senha corretos, quando confirmo o login, então sou levado ao painel de tarefas.<br><br>**2.** Dado que informei e-mail ou senha incorretos, quando confirmo o login, então vejo uma mensagem de erro e permaneço na tela de login.<br><br>**3.** Dado que não estou autenticado, quando tento abrir o painel diretamente, então sou redirecionado para a tela de login.<br><br>**4.** Dado que o e-mail ou a senha estão em branco, quando tento entrar, então o sistema não envia o login e avisa que os campos são obrigatórios. |
+| **US4** | Como usuário, quero excluir tarefas que não preciso mais para manter meu painel organizado. | **1.** Dado que existe uma tarefa no painel, quando clico em excluir, então a tarefa é removida do painel e do banco de dados.<br><br>**2.** Dado que excluí uma tarefa, quando atualizo a página, então a tarefa não reaparece.<br><br>**3.** Dado que a tarefa já foi excluída (por exemplo, em outra aba), quando tento excluí-la novamente, então o sistema informa que a tarefa não foi encontrada, sem quebrar a tela.<br><br>**4.** Dado que a exclusão falhou, então a tarefa continua no painel e vejo uma mensagem de erro. |
 
 ## Equipe
 
