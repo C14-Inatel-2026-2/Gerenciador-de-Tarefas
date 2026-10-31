@@ -49,14 +49,12 @@ Instruções detalhadas de instalação e execução de cada parte estão nos re
 | RNF07 | **Compatibilidade:** a interface deve ser responsiva e funcionar nos principais navegadores modernos (Chrome, Firefox, Edge). |
 | RNF08 | **Desempenho:** operações simples da API (criar, buscar, excluir uma tarefa) devem responder em menos de 1 segundo em condições normais de uso. |
 
-
 ## Histórias de Usuário
 
-| Código | História de Usuário |
-| --- | --- |
-| US1 | Como usuário, quero cadastrar tarefas com título, descrição e prioridade para organizar minhas atividades. |
-| US2 | Como usuário, quero visualizar minhas tarefas em um painel para acompanhar minhas atividades. |
-
+| Código | História de Usuário | Critérios de aceite |
+| :---: | :--- | :--- |
+| **US1** | Como usuário, quero cadastrar tarefas com título, descrição e prioridade para organizar minhas atividades. | **1.** Dado que estou no painel, quando informo um título e confirmo, então a tarefa é criada e aparece no painel com status "pendente".<br><br>**2.** Dado que não informei prioridade, quando salvo a tarefa, então ela recebe a prioridade "média" por padrão.<br><br>**3.** Dado que deixei o título vazio, quando tento salvar, então o sistema rejeita o cadastro e informa que o título é obrigatório.<br><br>**4.** Dado que escolhi a prioridade "alta", quando salvo a tarefa, então ela é exibida com a prioridade "alta". |
+| **US2** | Como usuário, quero visualizar minhas tarefas em um painel para acompanhar minhas atividades. | **1.** Dado que existem tarefas cadastradas, quando abro o painel, então todas elas são exibidas agrupadas por status (pendente, em andamento, concluída).<br><br>**2.** Dado que cada tarefa é exibida, então vejo seu título, descrição e prioridade.<br><br>**3.** Dado que ainda não há tarefas, quando abro o painel, então vejo uma mensagem indicando que não há tarefas cadastradas.<br><br>**4.** Dado que as tarefas estão sendo carregadas, então vejo um indicador de carregamento. |
 
 ## Equipe
 
