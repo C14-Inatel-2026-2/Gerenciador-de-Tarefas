@@ -17,12 +17,39 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
     return db_task
 
 
+@router.get("/", response_model=list[schemas.TaskOut])
+def list_tasks(db: Session = Depends(get_db)):
+    """Lista todas as tarefas cadastradas."""
+    return db.query(models.Task).all()
+
+
 @router.get("/{task_id}", response_model=schemas.TaskOut)
 def get_task(task_id: int, db: Session = Depends(get_db)):
     """Busca uma tarefa pelo id."""
     task = db.query(models.Task).filter(models.Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+    return task
+
+
+@router.put("/{task_id}", response_model=schemas.TaskOut)
+@router.patch("/{task_id}", response_model=schemas.TaskOut)
+def update_task(
+    task_id: int,
+    task_update: schemas.TaskUpdate,
+    db: Session = Depends(get_db),
+):
+    """Atualiza uma tarefa existente pelo id."""
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+
+    update_data = task_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(task, field, value)
+
+    db.commit()
+    db.refresh(task)
     return task
 
 

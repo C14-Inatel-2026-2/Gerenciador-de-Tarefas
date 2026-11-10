@@ -26,6 +26,22 @@ pipeline {
             }
         }
 
+        stage('Run Tests & Coverage') {
+            steps {
+                dir('frontend') {
+                    dir('reports') { deleteDir() }
+                    dir('coverage') { deleteDir() }
+                    script {
+                        if (isUnix()) {
+                            sh 'npm run test:ci'
+                        } else {
+                            bat 'npm run test:ci'
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Typecheck & Build') {
             steps {
                 dir('frontend') {
@@ -48,6 +64,17 @@ pipeline {
     }
 
     post {
+        always {
+            junit testResults: 'frontend/reports/junit.xml', allowEmptyResults: true
+            publishHTML(target: [
+                reportDir: 'frontend/coverage',
+                reportFiles: 'index.html',
+                reportName: 'Cobertura do frontend',
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                allowMissing: true
+            ])
+        }
         success {
             echo 'Build do frontend concluido com sucesso.'
         }
