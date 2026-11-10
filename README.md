@@ -19,7 +19,37 @@ Repositório: [C14-Inatel-2026-2/Gerenciador-de-Tarefas](https://github.com/C14-
 | Testes | Pytest + pytest-cov (backend), Vitest + Testing Library (frontend) |
 | CI/CD | Jenkins |
 
-Instruções detalhadas de instalação e execução de cada parte estão nos respectivos READMEs: [`backend/`](backend) e [`frontend/README.md`](frontend/README.md).
+## Instalação e execução local
+
+Pré-requisitos: [Node.js e npm](https://nodejs.org/) para o frontend e [Python](https://www.python.org/downloads/) para o backend.
+
+### Backend
+
+No PowerShell, a partir da raiz do repositório, crie e ative o ambiente virtual, instale as dependências e inicie a API:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+```
+
+Com o backend em execução, a API estará disponível em `http://localhost:8000` e a documentação interativa do Swagger em `http://localhost:8000/docs`. Por padrão, os dados são armazenados em SQLite no arquivo `backend/tasks.db`. Para usar outro banco, configure a variável de ambiente `DATABASE_URL` antes de iniciar a API.
+
+### Frontend
+
+Abra outro terminal na raiz do repositório e instale as dependências e inicie o servidor de desenvolvimento:
+
+```powershell
+cd frontend
+npm i
+npm run dev
+```
+
+O Vite exibirá no terminal o endereço local da interface, normalmente `http://localhost:5173`. Mantenha o backend e o frontend em execução ao mesmo tempo para usar as operações de tarefas.
+
+Consulte o [README do frontend](frontend/README.md) para detalhes adicionais de configuração, integração e scripts disponíveis.
 
 ## Requisitos Funcionais
 
