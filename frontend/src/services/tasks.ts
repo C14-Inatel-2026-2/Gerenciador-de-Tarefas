@@ -9,7 +9,6 @@ export async function deleteTask(id: string): Promise<void> {
   if (!response.ok) {
     throw new Error(`Não foi possível excluir a tarefa (HTTP ${response.status}).`);
   }
-  // DELETE retorna 204, sem corpo JSON.
 }
 
 export interface ApiTask {
@@ -19,11 +18,34 @@ export interface ApiTask {
   priority: PrioridadeTarefa;
   status: StatusTarefa;
   due_date: string | null;
+  created_at?: string;
 }
 
-export type TaskUpdate = Partial<Pick<ApiTask, 'title' | 'description' | 'priority' | 'status'>>;
+export type TaskCreate = {
+  title: string;
+  description?: string | null;
+  priority?: PrioridadeTarefa;
+  status?: StatusTarefa;
+  due_date?: string | null;
+};
 
-// Contrato proposto: PATCH parcial retorna a tarefa atualizada (TaskOut).
+export type TaskUpdate = Partial<Pick<ApiTask, 'title' | 'description' | 'priority' | 'status' | 'due_date'>>;
+
+export async function createTask(task: TaskCreate): Promise<Tarefa> {
+  const response = await fetch(TASKS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(task),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || 'Não foi possível criar a tarefa.');
+  }
+
+  return toTarefa(await response.json());
+}
+
 export async function updateTask(id: string, changes: TaskUpdate): Promise<Tarefa> {
   const response = await fetch(`${TASKS_URL}${encodeURIComponent(id)}`, {
     method: 'PATCH',

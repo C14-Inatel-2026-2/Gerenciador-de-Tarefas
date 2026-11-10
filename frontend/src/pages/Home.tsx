@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
 import { clearSession, useSession } from '../auth/session';
 import { TaskCard } from '../components/TaskCard';
-import { deleteTask, getTasks, TASKS_URL, toTarefa, updateTask } from '../services/tasks';
+import { createTask, deleteTask, getTasks, updateTask } from '../services/tasks';
 import type { TaskUpdate } from '../services/tasks';
 import type { Tarefa } from '../types';
 
 export function Home() {
   const handleUpdateTarefa = async (id: string, changes: TaskUpdate) => {
     const updated = await updateTask(id, changes);
-    setTarefas((current) => current.map((tarefa) => tarefa.id === id ? updated : tarefa));
+    setTarefas((current) => current.map((tarefa) => (tarefa.id === id ? updated : tarefa)));
   };
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [createTaskError, setCreateTaskError] = useState('');
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -40,7 +43,7 @@ export function Home() {
     setIsLoading(true);
     setLoadAttempt((attempt) => attempt + 1);
   };
-  
+
   const [titulo, setTitulo] = useState('');
   const [prioridade, setPrioridade] = useState('media');
   const [descricao, setDescricao] = useState('');
@@ -55,34 +58,34 @@ export function Home() {
 
   const handleAddTarefa = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    const title = titulo.trim();
+    if (!title) {
+      setCreateTaskError('Informe um título para a tarefa.');
+      return;
+    }
+
+    setIsCreatingTask(true);
+    setCreateTaskError('');
+
     try {
-      const response = await fetch(TASKS_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: titulo,
-          description: descricao,
-          priority: prioridade,
-        }),
+      const newTask = await createTask({
+        title,
+        description: descricao.trim() || null,
+        priority: prioridade as 'baixa' | 'media' | 'alta',
       });
 
-      if (!response.ok) {
-        throw new Error('Erro ao criar tarefa');
-      }
-
-      const newTask = await response.json();
-      setTarefas((current) => [...current, toTarefa(newTask)]);
-      
+      setTarefas((current) => [...current, newTask]);
       setTitulo('');
       setDescricao('');
       setPrioridade('media');
       setIsModalOpen(false);
+      setCreateTaskError('');
     } catch (error) {
       console.error(error);
-      alert('Erro ao criar tarefa. Verifique a conexão com a API.');
+      setCreateTaskError('Erro ao criar tarefa. Verifique a conexão com a API.');
+    } finally {
+      setIsCreatingTask(false);
     }
   };
 
@@ -102,8 +105,11 @@ export function Home() {
           </button>
           <button 
             disabled={isLoading}
-            onClick={() => setIsModalOpen(true)}
-            className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white shadow-md hover:bg-blue-700 transition-colors"
+            onClick={() => {
+              setCreateTaskError('');
+              setIsModalOpen(true);
+            }}
+            className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white shadow-md hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
           >
             + Nova Tarefa
           </button>
@@ -143,7 +149,10 @@ export function Home() {
                   <input
                     type="text"
                     value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
+                    onChange={(e) => {
+                      setTitulo(e.target.value);
+                      if (createTaskError) setCreateTaskError('');
+                    }}
                     required
                     className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     placeholder="Ex: Estudar React"
@@ -178,19 +187,27 @@ export function Home() {
                   />
                 </div>
 
+                {createTaskError && (
+                  <p role="alert" className="text-sm text-red-400">{createTaskError}</p>
+                )}
+
                 <div className="mt-8 flex justify-end space-x-3">
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setCreateTaskError('');
+                    }}
                     className="rounded-lg px-4 py-2 font-medium text-slate-300 hover:bg-slate-700 transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 transition-colors"
+                    disabled={isCreatingTask}
+                    className="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Salvar
+                    {isCreatingTask ? 'Salvando...' : 'Salvar'}
                   </button>
                 </div>
               </form>
