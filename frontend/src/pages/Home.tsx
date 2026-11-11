@@ -1,20 +1,31 @@
 import { useEffect, useState } from 'react';
+import { Check, CheckSquare, ListTodo, LogOut, Plus, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { clearSession, useSession } from '../auth/session';
 import { TaskCard } from '../components/TaskCard';
-import { deleteTask, getTasks, TASKS_URL, toTarefa, updateTask } from '../services/tasks';
+import { createTask, deleteTask, getTasks, updateTask } from '../services/tasks';
 import type { TaskUpdate } from '../services/tasks';
-import type { Tarefa } from '../types';
+import type { PrioridadeTarefa, Tarefa } from '../types';
 
 export function Home() {
-  const handleUpdateTarefa = async (id: string, changes: TaskUpdate) => {
-    const updated = await updateTask(id, changes);
-    setTarefas((current) => current.map((tarefa) => tarefa.id === id ? updated : tarefa));
-  };
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [createTaskError, setCreateTaskError] = useState('');
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [titulo, setTitulo] = useState('');
+  const [prioridade, setPrioridade] = useState<PrioridadeTarefa>('media');
+  const [descricao, setDescricao] = useState('');
+
+  const session = useSession();
+  const nomeUsuario = session?.email.split('@')[0] ?? '';
+
+  const handleUpdateTarefa = async (id: string, changes: TaskUpdate) => {
+    const updated = await updateTask(id, changes);
+    setTarefas((current) => current.map((tarefa) => (tarefa.id === id ? updated : tarefa)));
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -40,124 +51,174 @@ export function Home() {
     setIsLoading(true);
     setLoadAttempt((attempt) => attempt + 1);
   };
-  
-  const [titulo, setTitulo] = useState('');
-  const [prioridade, setPrioridade] = useState('media');
-  const [descricao, setDescricao] = useState('');
-
-  const session = useSession();
-  const nomeUsuario = session?.email.split('@')[0] ?? '';
 
   const handleDeleteTarefa = async (id: string) => {
     await deleteTask(id);
     setTarefas((current) => current.filter((tarefa) => tarefa.id !== id));
   };
 
-  const handleAddTarefa = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleAddTarefa = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const title = titulo.trim();
+    if (!title) {
+      setCreateTaskError('Informe um título para a tarefa.');
+      return;
+    }
+
+    setIsCreatingTask(true);
+    setCreateTaskError('');
+
     try {
-      const response = await fetch(TASKS_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: titulo,
-          description: descricao,
-          priority: prioridade,
-        }),
+      const newTask = await createTask({
+        title,
+        description: descricao.trim() || null,
+        priority: prioridade,
       });
 
-      if (!response.ok) {
-        throw new Error('Erro ao criar tarefa');
-      }
-
-      const newTask = await response.json();
-      setTarefas((current) => [...current, toTarefa(newTask)]);
-      
+      setTarefas((current) => [...current, newTask]);
       setTitulo('');
       setDescricao('');
       setPrioridade('media');
       setIsModalOpen(false);
+      setCreateTaskError('');
     } catch (error) {
       console.error(error);
-      alert('Erro ao criar tarefa. Verifique a conexão com a API.');
+      setCreateTaskError('Erro ao criar tarefa. Verifique a conexão com a API.');
+    } finally {
+      setIsCreatingTask(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 p-8">
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-8 flex items-center justify-between">
-          {/* Título atualizado com o nome do usuário */}
-          <h1 className="text-3xl font-extrabold text-white">Olá, {nomeUsuario}!</h1>
-          
-          <button
-            type="button"
-            onClick={clearSession}
-            className="rounded-lg px-4 py-2 font-semibold text-slate-300 hover:bg-slate-800"
-          >
-            Sair
-          </button>
-          <button 
-            disabled={isLoading}
-            onClick={() => setIsModalOpen(true)}
-            className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white shadow-md hover:bg-blue-700 transition-colors"
-          >
-            + Nova Tarefa
-          </button>
-        </header>
+    <div className="app-shell">
+      <aside className="app-sidebar">
+        <div className="sidebar-inner">
+          <div className="sidebar-brand">
+            <span className="brand-mark" aria-hidden="true"><Check size={17} strokeWidth={2.5} /></span>
+            <span>Gerenciador de Tarefas</span>
+          </div>
 
-        {isLoading ? (
-          <p role="status" className="py-12 text-center text-slate-400">Carregando tarefas...</p>
-        ) : loadError ? (
-          <div role="alert" className="rounded-xl border border-red-500/30 bg-slate-800 p-6 text-center">
-            <p className="text-red-400">{loadError}</p>
-            <button type="button" onClick={retryLoad} className="mt-4 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
-              Tentar novamente
+          <nav className="sidebar-nav" aria-label="Navegação principal">
+            <Link className="nav-link" to="/dashboard" aria-current="page">
+              <ListTodo size={17} strokeWidth={1.9} aria-hidden="true" />
+              <span>Minhas tarefas</span>
+            </Link>
+          </nav>
+
+          <div className="sidebar-spacer" />
+
+          <div className="sidebar-account">
+            <div className="account-details">
+              <div className="account-label">Conectado como</div>
+              <div className="account-email" title={session?.email}>{nomeUsuario}</div>
+            </div>
+            <button type="button" onClick={clearSession} className="logout-button">
+              <LogOut size={16} strokeWidth={1.9} aria-hidden="true" />
+              <span>Sair</span>
             </button>
           </div>
-        ) : tarefas.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {tarefas.map((tarefa) => (
-              <TaskCard key={tarefa.id} tarefa={tarefa} onDelete={handleDeleteTarefa} onUpdate={handleUpdateTarefa} />
-            ))}
-          </div>
-        ) : (
-        <div className="flex h-64 items-center justify-center rounded-xl border-2 border-dashed border-slate-700 bg-slate-800/30">
-          <p className="text-slate-400">O quadro está limpo. Clique no botão acima para começar!</p>
         </div>
-        )}
-        
+      </aside>
+
+      <main className="main-content">
+        <div className="content-inner">
+          <header className="page-header">
+            <div>
+              <h1 className="page-title">Minhas tarefas</h1>
+              <p className="page-description">Organize e acompanhe suas atividades.</p>
+            </div>
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={() => {
+                setCreateTaskError('');
+                setIsModalOpen(true);
+              }}
+              className="button-primary"
+            >
+              <Plus size={16} strokeWidth={2} aria-hidden="true" />
+              <span>Nova tarefa</span>
+            </button>
+          </header>
+
+          {isLoading ? (
+            <div role="status" className="feedback-loading">Carregando tarefas...</div>
+          ) : loadError ? (
+            <div role="alert" className="feedback-error">
+              <p>{loadError}</p>
+              <button type="button" onClick={retryLoad} className="button-secondary">
+                Tentar novamente
+              </button>
+            </div>
+          ) : tarefas.length > 0 ? (
+            <section className="task-list" aria-label="Lista de tarefas">
+              {tarefas.map((tarefa) => (
+                <TaskCard key={tarefa.id} tarefa={tarefa} onDelete={handleDeleteTarefa} onUpdate={handleUpdateTarefa} />
+              ))}
+            </section>
+          ) : (
+            <div className="empty-state">
+              <span className="empty-state-icon" aria-hidden="true"><CheckSquare size={18} strokeWidth={1.8} /></span>
+              <p className="empty-state-title">Nenhuma tarefa por aqui</p>
+              <p className="empty-state-description">Crie uma tarefa para começar a organizar suas atividades.</p>
+            </div>
+          )}
+        </div>
+
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-            <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-2xl">
-              <h2 className="mb-6 text-2xl font-bold text-white">Adicionar Nova Tarefa</h2>
-              
-              <form onSubmit={handleAddTarefa} className="space-y-5">
+          <div className="modal-backdrop">
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="create-task-title"
+              className="modal-panel"
+            >
+              <header className="modal-header">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-300">
-                    Título da Tarefa
-                  </label>
+                  <h2 id="create-task-title" className="modal-title">Nova tarefa</h2>
+                  <p className="modal-description">Adicione uma atividade à sua lista.</p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Fechar formulário"
+                  disabled={isCreatingTask}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setCreateTaskError('');
+                  }}
+                  className="icon-button"
+                >
+                  <X size={17} aria-hidden="true" />
+                </button>
+              </header>
+
+              <form onSubmit={handleAddTarefa} className="create-form">
+                <div className="field-group">
+                  <label htmlFor="task-title" className="field-label">Título</label>
                   <input
+                    id="task-title"
                     type="text"
                     value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
+                    onChange={(event) => {
+                      setTitulo(event.target.value);
+                      if (createTaskError) setCreateTaskError('');
+                    }}
                     required
-                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    placeholder="Ex: Estudar React"
+                    maxLength={120}
+                    autoFocus
+                    className="field-control"
+                    placeholder="Ex.: Estudar React"
                   />
                 </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-300">
-                    Prioridade
-                  </label>
+                <div className="field-group">
+                  <label htmlFor="task-priority" className="field-label">Prioridade</label>
                   <select
+                    id="task-priority"
                     value={prioridade}
-                    onChange={(e) => setPrioridade(e.target.value)}
-                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    onChange={(event) => setPrioridade(event.target.value as PrioridadeTarefa)}
+                    className="field-control"
                   >
                     <option value="baixa">Baixa</option>
                     <option value="media">Média</option>
@@ -165,39 +226,42 @@ export function Home() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-300">
-                    Descrição
-                  </label>
+                <div className="field-group">
+                  <label htmlFor="task-description" className="field-label">Descrição</label>
                   <textarea
+                    id="task-description"
                     value={descricao}
-                    onChange={(e) => setDescricao(e.target.value)}
+                    onChange={(event) => setDescricao(event.target.value)}
+                    maxLength={500}
                     rows={3}
-                    className="w-full resize-none rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="field-control"
                     placeholder="Detalhes adicionais da tarefa..."
                   />
                 </div>
 
-                <div className="mt-8 flex justify-end space-x-3">
+                {createTaskError && <p role="alert" className="form-error">{createTaskError}</p>}
+
+                <div className="modal-actions">
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="rounded-lg px-4 py-2 font-medium text-slate-300 hover:bg-slate-700 transition-colors"
+                    disabled={isCreatingTask}
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      setCreateTaskError('');
+                    }}
+                    className="button-secondary"
                   >
                     Cancelar
                   </button>
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 transition-colors"
-                  >
-                    Salvar
+                  <button type="submit" disabled={isCreatingTask} className="button-primary">
+                    {isCreatingTask ? 'Salvando...' : 'Salvar tarefa'}
                   </button>
                 </div>
               </form>
-            </div>
+            </section>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
