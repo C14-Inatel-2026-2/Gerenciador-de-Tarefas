@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock
+from app.database import Base
 
 import pytest
 from pydantic import ValidationError
@@ -21,6 +22,11 @@ class TestesSemMock:
     def test_criar_tarefa_com_data_de_vencimento_invalida_falha(self):
         with pytest.raises(ValidationError):
             schemas.TaskCreate(title="Tarefa com data ruim", due_date="not-a-date")
+
+    def test_metadados_alembic_possuem_tabelas_users_e_tasks(self):
+        tabelas = set(Base.metadata.tables.keys())
+        assert "users" in tabelas
+        assert "tasks" in tabelas
 
 class TestesComMock:
     def test_deletar_tarefa_com_mock_sucesso(self):

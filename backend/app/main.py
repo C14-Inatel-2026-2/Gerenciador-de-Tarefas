@@ -1,10 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import Base, engine
 from app.routers import tasks
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Gerenciador de Tarefas - API",
