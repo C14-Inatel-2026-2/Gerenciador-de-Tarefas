@@ -12,6 +12,7 @@ class TaskBase(BaseModel):
     priority: TaskPriority = TaskPriority.media
     status: TaskStatus = TaskStatus.pendente
     due_date: Optional[datetime] = None
+    owner_id: Optional[int] = None
 
     @field_validator("title")
     @classmethod
@@ -33,6 +34,7 @@ class TaskUpdate(BaseModel):
     priority: Optional[TaskPriority] = None
     status: Optional[TaskStatus] = None
     due_date: Optional[datetime] = None
+    owner_id: Optional[int] = None
 
     @field_validator("title")
     @classmethod
