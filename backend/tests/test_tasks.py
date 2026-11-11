@@ -114,3 +114,55 @@ def test_deleted_task_cannot_be_deleted_twice(client):
 
     assert first_delete.status_code == 204
     assert second_delete.status_code == 404
+
+def test_list_tasks_returns_all(client):
+    """Deve listar todas as tarefas quando nenhum filtro for enviado."""
+    client.post("/tasks/", json={"title": "Tarefa 1", "priority": "baixa", "status": "pendente"})
+    client.post("/tasks/", json={"title": "Tarefa 2", "priority": "alta", "status": "concluida"})
+
+    response = client.get("/tasks/")
+
+    assert response.status_code == 200
+    assert len(response.json()) == 2
+
+
+def test_list_tasks_filter_by_status(client):
+    """Deve filtrar as tarefas pelo status informado."""
+    client.post("/tasks/", json={"title": "Pendente", "status": "pendente"})
+    client.post("/tasks/", json={"title": "Concluída", "status": "concluida"})
+
+    response = client.get("/tasks/?status=concluida")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["title"] == "Concluída"
+    assert data[0]["status"] == "concluida"
+
+
+def test_list_tasks_filter_by_priority(client):
+    """Deve filtrar as tarefas pela prioridade informada."""
+    client.post("/tasks/", json={"title": "Baixa", "priority": "baixa"})
+    client.post("/tasks/", json={"title": "Alta", "priority": "alta"})
+
+    response = client.get("/tasks/?priority=alta")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["title"] == "Alta"
+    assert data[0]["priority"] == "alta"
+
+
+def test_list_tasks_filter_by_status_and_priority(client):
+    """Deve permitir combinar os filtros de status e prioridade."""
+    client.post("/tasks/", json={"title": "Alvo", "status": "em_andamento", "priority": "alta"})
+    client.post("/tasks/", json={"title": "Outra 1", "status": "em_andamento", "priority": "baixa"})
+    client.post("/tasks/", json={"title": "Outra 2", "status": "pendente", "priority": "alta"})
+
+    response = client.get("/tasks/?status=em_andamento&priority=alta")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["title"] == "Alvo"

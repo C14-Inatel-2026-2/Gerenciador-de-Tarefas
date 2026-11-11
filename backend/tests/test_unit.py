@@ -43,3 +43,26 @@ class TestesComMock:
             tasks.create_task(task=nova_tarefa, db=mock_db)
 
         mock_db.add.assert_called_once()
+
+    def test_listar_tarefas_com_filtros_status_e_prioridade_mock(self):
+        mock_db = MagicMock(spec=Session)
+        query_mock = mock_db.query.return_value
+        filter_status_mock = query_mock.filter.return_value
+        filter_priority_mock = filter_status_mock.filter.return_value
+        tarefa_esperada = models.Task(
+            id=1,
+            title="Tarefa Filtrada",
+            status=models.TaskStatus.pendente,
+            priority=models.TaskPriority.alta,
+        )
+        filter_priority_mock.all.return_value = [tarefa_esperada]
+
+        resultado = tasks.list_tasks(
+            status=models.TaskStatus.pendente,
+            priority=models.TaskPriority.alta,
+            db=mock_db,
+        )
+
+        assert resultado == [tarefa_esperada]
+        query_mock.filter.assert_called_once()
+        filter_status_mock.filter.assert_called_once()

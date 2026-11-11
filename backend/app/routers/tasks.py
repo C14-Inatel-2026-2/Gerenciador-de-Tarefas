@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -25,12 +26,6 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_task)
     return db_task
-
-
-@router.get("/", response_model=list[schemas.TaskOut])
-def list_tasks(db: Session = Depends(get_db)):
-    """Lista todas as tarefas cadastradas."""
-    return db.query(models.Task).all()
 
 
 @router.get("/{task_id}", response_model=schemas.TaskOut)
@@ -65,3 +60,17 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.delete(task)
     db.commit()
     return None
+
+@router.get("/", response_model=list[schemas.TaskOut])
+def list_tasks(
+    status: Optional[models.TaskStatus] = None,
+    priority: Optional[models.TaskPriority] = None,
+    db: Session = Depends(get_db),
+):
+    """Lista todas as tarefas cadastradas, com filtros opcionais de status e prioridade."""
+    query = db.query(models.Task)
+    if status is not None:
+        query = query.filter(models.Task.status == status)
+    if priority is not None:
+        query = query.filter(models.Task.priority == priority)
+    return query.all()
