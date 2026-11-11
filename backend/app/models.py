@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, DateTime, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey
 from sqlalchemy.sql import func
 
 from app.database import Base
@@ -19,6 +19,16 @@ class TaskStatus(str, enum.Enum):
     concluida = "concluida"
 
 
+class User(Base):
+    """Mapeia a tabela `users` ja existente no Supabase."""
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    senha = Column(String, nullable=False)
+
+
 class Task(Base):
     __tablename__ = "tasks"
 
@@ -29,3 +39,4 @@ class Task(Base):
     status = Column(Enum(TaskStatus), default=TaskStatus.pendente, nullable=False)
     due_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)

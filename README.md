@@ -61,6 +61,13 @@ Instruções detalhadas de instalação e execução de cada parte estão nos re
 | **US6** | Como integrador do sistema, eu quero consultar uma tarefa específica pelo seu identificador, para que eu possa construir funcionalidades que dependam de uma tarefa isolada (ex: tela de detalhes). | **1.** Dado um id existente, a requisição retorna os dados completos da tarefa.<br><br>**2.** Dado um id inexistente, a requisição retorna erro 404 com mensagem clara. |
 | **US7** | Como usuário, quero ser informado caso ocorra uma falha ao carregar as tarefas e ter a opção de tentar novamente, para que eu saiba se houve um problema de conexão e possa recarregar minhas tarefas sem sair do painel. | **1.** Dado que ocorreu uma falha de comunicação ao buscar as tarefas, quando o painel termina de tentar carregar, então vejo uma mensagem clara informando que não foi possível carregar as tarefas.<br><br>**2.** Dado que a mensagem de erro está visível, quando clico em "Tentar novamente", então o sistema dispara uma nova tentativa e exibe o indicador de carregamento.<br><br>**3.** Dado que a nova tentativa obteve sucesso, quando os dados são retornados, então a mensagem de erro desaparece e minhas tarefas são exibidas no painel.<br><br>**4.** Dado que a nova tentativa falhou novamente, quando a requisição encerra com erro, então a mensagem de erro continua visível permitindo nova tentativa. |
 
+## Refactorings
+
+| Quem | Smell | Refactoring aplicado | Por quê | PR |
+| --- | --- | --- | --- | --- |
+| Fernando Faluxis | Lógica de busca + 404 duplicada em `get_task`, `update_task` e `delete_task` (`backend/app/routers/tasks.py`) | Extract Function: criada `get_task_or_404(task_id, db)`, chamada pelas três rotas | Reduz 3 blocos idênticos de 3 linhas para 1 chamada, centralizando a mensagem de erro numa constante (`TASK_NOT_FOUND_DETAIL`) e facilitando manutenção futura | _(preencher após abrir o PR)_ |
+| Fernando Faluxis | Configuração de conexão (URL padrão do SQLite e `connect_args`) solta no escopo do módulo em `backend/app/database.py` | Extract Function: criadas `get_database_url()` e `get_connect_args(database_url)` | Isola a decisão de qual banco usar e quais argumentos de conexão aplicar, tornando a lógica testável isoladamente (ver `test_get_connect_args_sqlite_vs_postgres`) sem precisar instanciar uma engine real | _(preencher após abrir o PR)_ |
+
 ## Equipe
 
 Grupo C14 — Inatel — 2026/2.

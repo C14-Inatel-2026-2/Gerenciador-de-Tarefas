@@ -1,3 +1,31 @@
+def test_create_task_with_owner_id(client):
+    """Deve relacionar a tarefa a um usuario existente via owner_id."""
+    from app import models
+    from conftest import TestingSessionLocal
+
+    db = TestingSessionLocal()
+    user = models.User(nome="Teste", email="teste@exemplo.com", senha="hash-fake")
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    db.close()
+
+    payload = {"title": "Tarefa com dono", "owner_id": user.id}
+
+    response = client.post("/tasks/", json=payload)
+
+    assert response.status_code == 201
+    assert response.json()["owner_id"] == user.id
+
+
+def test_create_task_without_owner_id_defaults_to_none(client):
+    """Sem owner_id informado, a tarefa deve ser criada sem dono (None)."""
+    response = client.post("/tasks/", json={"title": "Tarefa sem dono"})
+
+    assert response.status_code == 201
+    assert response.json()["owner_id"] is None
+
+
 def test_create_task_success(client):
     """Deve criar uma tarefa e devolver os dados com id gerado."""
     payload = {

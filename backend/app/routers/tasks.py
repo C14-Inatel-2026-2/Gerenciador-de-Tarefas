@@ -6,6 +6,16 @@ from app.database import get_db
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
+TASK_NOT_FOUND_DETAIL = "Tarefa não encontrada"
+
+
+def get_task_or_404(task_id: int, db: Session) -> models.Task:
+    """Busca uma tarefa pelo id ou lança HTTPException 404 caso não exista."""
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail=TASK_NOT_FOUND_DETAIL)
+    return task
+
 
 @router.post("/", response_model=schemas.TaskOut, status_code=201)
 def create_task(task: schemas.TaskCreate, db: Session = Depends(get_db)):
@@ -26,23 +36,17 @@ def list_tasks(db: Session = Depends(get_db)):
 @router.get("/{task_id}", response_model=schemas.TaskOut)
 def get_task(task_id: int, db: Session = Depends(get_db)):
     """Busca uma tarefa pelo id."""
-    task = db.query(models.Task).filter(models.Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
-    return task
+    return get_task_or_404(task_id, db)
 
 
-@router.put("/{task_id}", response_model=schemas.TaskOut)
 @router.patch("/{task_id}", response_model=schemas.TaskOut)
 def update_task(
     task_id: int,
     task_update: schemas.TaskUpdate,
     db: Session = Depends(get_db),
 ):
-    """Atualiza uma tarefa existente pelo id."""
-    task = db.query(models.Task).filter(models.Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+    """Atualiza parcialmente uma tarefa existente pelo id."""
+    task = get_task_or_404(task_id, db)
 
     update_data = task_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -56,9 +60,7 @@ def update_task(
 @router.delete("/{task_id}", status_code=204)
 def delete_task(task_id: int, db: Session = Depends(get_db)):
     """Remove uma tarefa pelo id."""
-    task = db.query(models.Task).filter(models.Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+    task = get_task_or_404(task_id, db)
 
     db.delete(task)
     db.commit()
