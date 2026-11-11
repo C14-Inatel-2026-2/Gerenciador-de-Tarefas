@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { CalendarDays, Pencil, Trash2 } from 'lucide-react';
 import type { PrioridadeTarefa, StatusTarefa, Tarefa } from '../types';
 import type { TaskUpdate } from '../services/tasks';
 
@@ -7,6 +8,30 @@ interface TaskCardProps {
   onDelete: (id: string) => Promise<void>;
   onUpdate: (id: string, changes: TaskUpdate) => Promise<void>;
 }
+
+const priorityLabels: Record<PrioridadeTarefa, string> = {
+  baixa: 'Baixa',
+  media: 'Média',
+  alta: 'Alta',
+};
+
+const statusLabels: Record<StatusTarefa, string> = {
+  pendente: 'Pendente',
+  em_andamento: 'Em andamento',
+  concluida: 'Concluída',
+};
+
+const priorityClasses: Record<PrioridadeTarefa, string> = {
+  baixa: 'badge-priority-low',
+  media: 'badge-priority-medium',
+  alta: 'badge-priority-high',
+};
+
+const statusClasses: Record<StatusTarefa, string> = {
+  pendente: 'badge-status-pending',
+  em_andamento: 'badge-status-progress',
+  concluida: 'badge-status-done',
+};
 
 export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -60,92 +85,137 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
     setIsEditing(true);
   };
 
-  const fieldClass = 'mt-1 w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-2 text-white';
-
-  const corPrioridade = {
-    baixa: 'bg-green-500/20 text-green-400',
-    media: 'bg-yellow-500/20 text-yellow-400',
-    alta: 'bg-red-500/20 text-red-400',
-  }[tarefa.prioridade];
-
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm transition-all hover:shadow-md hover:border-slate-600">
-      <div className="flex items-start justify-between">
-        <h3 className="text-lg font-semibold text-white">{tarefa.titulo}</h3>
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${corPrioridade}`}>
-          {tarefa.prioridade.toUpperCase()}
-        </span>
-      </div>
-      
-      {tarefa.descricao && (
-        <p className="mt-2 text-sm text-slate-400">{tarefa.descricao}</p>
-      )}
-      
-      <div className="mt-4 flex items-center justify-between border-t border-slate-700 pt-3 text-sm">
-        <label className="text-slate-300">
-          Status
+    <article className="task-card">
+      <div className="task-card-heading">
+        <div>
+          <h2 className="task-title">{tarefa.titulo}</h2>
+          {tarefa.descricao && <p className="task-description">{tarefa.descricao}</p>}
+        </div>
+        <div className="task-badges">
+          <span className={`badge ${priorityClasses[tarefa.prioridade]}`}>
+            Prioridade: {priorityLabels[tarefa.prioridade]}
+          </span>
           <select
             aria-label={`Status da tarefa: ${tarefa.titulo}`}
             value={tarefa.status}
             disabled={isSaving || isDeleting || isEditing}
             onChange={(event) => void handleUpdate({ status: event.target.value as StatusTarefa })}
-            className={fieldClass}
+            className={`badge status-select ${statusClasses[tarefa.status]}`}
           >
-            <option value="pendente">Pendente</option>
-            <option value="em_andamento">Em andamento</option>
-            <option value="concluida">Concluída</option>
+            {Object.entries(statusLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
           </select>
-        </label>
-        {tarefa.dataVencimento && (
-          <span className="text-slate-500">Vence em: {tarefa.dataVencimento}</span>
-        )}
+        </div>
       </div>
+
       {isEditing && (
-        <form className="mt-4 space-y-3" onSubmit={(event) => {
-          event.preventDefault();
-          if (!title.trim()) {
-            setUpdateError('Informe um título para a tarefa.');
-            return;
-          }
-          void handleUpdate({ title: title.trim(), description: description.trim() || null, priority });
-        }}>
-          <fieldset disabled={isSaving} className="space-y-3">
-            <legend className="font-semibold text-white">Editar tarefa</legend>
-            <label className="block text-sm text-slate-300">Título
-              <input autoFocus required maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} className={fieldClass} />
-            </label>
-            <label className="block text-sm text-slate-300">Descrição
-              <textarea maxLength={500} rows={3} value={description} onChange={(event) => setDescription(event.target.value)} className={fieldClass} />
-            </label>
-            <label className="block text-sm text-slate-300">Prioridade
-              <select value={priority} onChange={(event) => setPriority(event.target.value as PrioridadeTarefa)} className={fieldClass}>
+        <form
+          className="task-edit-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!title.trim()) {
+              setUpdateError('Informe um título para a tarefa.');
+              return;
+            }
+            void handleUpdate({ title: title.trim(), description: description.trim() || null, priority });
+          }}
+        >
+          <fieldset disabled={isSaving} className="grid gap-3 border-0 p-0">
+            <legend className="field-label">Editar tarefa</legend>
+            <div className="field-group">
+              <label htmlFor={`title-${tarefa.id}`} className="field-label">Título</label>
+              <input
+                id={`title-${tarefa.id}`}
+                autoFocus
+                required
+                maxLength={120}
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                className="field-control"
+              />
+            </div>
+            <div className="field-group">
+              <label htmlFor={`description-${tarefa.id}`} className="field-label">Descrição</label>
+              <textarea
+                id={`description-${tarefa.id}`}
+                maxLength={500}
+                rows={3}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                className="field-control"
+              />
+            </div>
+            <div className="field-group">
+              <label htmlFor={`priority-${tarefa.id}`} className="field-label">Prioridade</label>
+              <select
+                id={`priority-${tarefa.id}`}
+                value={priority}
+                onChange={(event) => setPriority(event.target.value as PrioridadeTarefa)}
+                className="field-control"
+              >
                 <option value="baixa">Baixa</option>
                 <option value="media">Média</option>
                 <option value="alta">Alta</option>
               </select>
-            </label>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => { setIsEditing(false); setUpdateError(''); }} className="rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-700">Cancelar</button>
-              <button type="submit" className="rounded-lg bg-blue-600 px-3 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{isSaving ? 'Salvando...' : 'Salvar'}</button>
+            </div>
+            {updateError && <p role="alert" className="form-error">{updateError}</p>}
+            <div className="task-edit-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(false);
+                  setUpdateError('');
+                }}
+                className="button-secondary"
+              >
+                Cancelar
+              </button>
+              <button type="submit" className="button-primary">
+                {isSaving ? 'Salvando...' : 'Salvar'}
+              </button>
             </div>
           </fieldset>
         </form>
       )}
-      {isSaving && <p role="status" className="mt-2 text-sm text-slate-300">Salvando alterações...</p>}
-      {updateError && <p role="alert" className="mt-2 text-sm text-red-400">{updateError}</p>}
-      {!isEditing && <div className="mt-4 flex justify-end">
-        <button type="button" onClick={startEditing} disabled={isSaving || isDeleting} aria-label={`Editar tarefa: ${tarefa.titulo}`} className="rounded-lg px-3 py-2 text-sm font-semibold text-blue-400 hover:bg-blue-500/10 disabled:opacity-50">Editar</button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={isDeleting || isSaving}
-          aria-label={`Excluir tarefa: ${tarefa.titulo}`}
-          className="rounded-lg px-3 py-2 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/10 focus-visible:outline-2 focus-visible:outline-red-400 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isDeleting ? 'Excluindo...' : 'Excluir'}
-        </button>
-      </div>}
-      {deleteError && <p role="alert" className="mt-2 text-sm text-red-400">{deleteError}</p>}
-    </div>
+
+      <div className="task-card-footer">
+        <div className="task-meta">
+          {tarefa.dataVencimento && (
+            <span className="task-due-date">
+              <CalendarDays size={14} strokeWidth={1.8} aria-hidden="true" />
+              Vence em {tarefa.dataVencimento}
+            </span>
+          )}
+          {isSaving && <span role="status">Salvando alterações...</span>}
+        </div>
+        {!isEditing && (
+          <div className="task-actions">
+            <button
+              type="button"
+              onClick={startEditing}
+              disabled={isSaving || isDeleting}
+              aria-label={`Editar tarefa: ${tarefa.titulo}`}
+              className="icon-button"
+            >
+              <Pencil size={15} strokeWidth={1.9} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting || isSaving}
+              aria-label={`Excluir tarefa: ${tarefa.titulo}`}
+              className="icon-button icon-button-danger"
+            >
+              <Trash2 size={15} strokeWidth={1.9} aria-hidden="true" />
+            </button>
+          </div>
+        )}
+      </div>
+      {updateError && !isEditing && <p role="alert" className="inline-error">{updateError}</p>}
+      {deleteError && <p role="alert" className="inline-error">{deleteError}</p>}
+      {isDeleting && <p role="status" className="inline-error">Excluindo tarefa...</p>}
+    </article>
   );
 }
