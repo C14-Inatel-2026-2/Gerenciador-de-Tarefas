@@ -12,7 +12,6 @@ class TaskBase(BaseModel):
     priority: TaskPriority = TaskPriority.media
     status: TaskStatus = TaskStatus.pendente
     due_date: Optional[datetime] = None
-    owner_id: Optional[int] = None
 
     @field_validator("title")
     @classmethod
@@ -23,7 +22,11 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    """Campos aceitos na criação de uma tarefa (POST)."""
+    """Campos aceitos na criação de uma tarefa (POST).
+
+    Não inclui `owner_id`: o dono da tarefa é sempre o usuário autenticado
+    (extraído do token), nunca um valor enviado pelo cliente.
+    """
     pass
 
 
@@ -34,7 +37,6 @@ class TaskUpdate(BaseModel):
     priority: Optional[TaskPriority] = None
     status: Optional[TaskStatus] = None
     due_date: Optional[datetime] = None
-    owner_id: Optional[int] = None
 
     @field_validator("title")
     @classmethod
@@ -48,5 +50,32 @@ class TaskOut(TaskBase):
     """O que a API devolve para o cliente."""
     id: int
     created_at: datetime
+    owner_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserCreate(BaseModel):
+    """Campos aceitos no cadastro de um novo usuário."""
+    nome: str = Field(..., min_length=1, max_length=120)
+    email: str = Field(..., min_length=3, max_length=255)
+    senha: str = Field(..., min_length=6, max_length=72)
+
+
+class UserOut(BaseModel):
+    """O que a API devolve para o cliente após cadastro (nunca a senha)."""
+    id: int
+    nome: str
+    email: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LoginRequest(BaseModel):
+    email: str
+    senha: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
