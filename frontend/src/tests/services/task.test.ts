@@ -61,7 +61,7 @@ describe('toTarefa', ()=> {
             due_date: '2026-10-15T12:00:00',
         };
         const resultado = toTarefa(task);
-        expect(resultado.dataVencimento).toBe('15/10/2026');
+        expect(resultado.dataVencimento).toBe('2026-10-15');
     })
 
     it('preserva os dados originais recebidos da API', () => {

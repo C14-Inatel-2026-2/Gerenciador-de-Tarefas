@@ -39,6 +39,7 @@ describe('Home', () => {
           title: string;
           description: string | null;
           priority: ApiTask['priority'];
+          due_date: string | null;
         };
         const task: ApiTask = {
           id: 2,
@@ -46,7 +47,7 @@ describe('Home', () => {
           description: body.description,
           priority: body.priority,
           status: 'pendente',
-          due_date: null,
+          due_date: body.due_date,
         };
         apiTasks.push(task);
         return new Response(JSON.stringify(task), {
@@ -77,6 +78,7 @@ describe('Home', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     localStorage.clear();
   });
 
@@ -96,6 +98,7 @@ describe('Home', () => {
     const dialog = screen.getByRole('dialog');
     await user.type(within(dialog).getByLabelText('Título'), 'Preparar apresentação');
     await user.selectOptions(within(dialog).getByLabelText('Prioridade'), 'media');
+    await user.type(within(dialog).getByLabelText('Data de vencimento'), '2026-07-12');
     await user.type(within(dialog).getByLabelText('Descrição'), 'Reunir os materiais');
     await user.click(within(dialog).getByRole('button', { name: 'Salvar tarefa' }));
 
@@ -108,15 +111,19 @@ describe('Home', () => {
           title: 'Preparar apresentação',
           description: 'Reunir os materiais',
           priority: 'media',
+          due_date: '2026-07-12T00:00:00',
         }),
       }),
     );
+    expect(await screen.findByText('Vence em 12/07/2026')).toBeInTheDocument();
 
     const createdCard = createdTitle.closest('article');
     expect(createdCard).not.toBeNull();
     await user.click(within(createdCard!).getByRole('button', { name: 'Editar tarefa: Preparar apresentação' }));
     await user.clear(within(createdCard!).getByLabelText('Título'));
     await user.type(within(createdCard!).getByLabelText('Título'), 'Finalizar apresentação');
+    await user.clear(within(createdCard!).getByLabelText('Data de vencimento'));
+    await user.type(within(createdCard!).getByLabelText('Data de vencimento'), '2026-07-20');
     await user.click(within(createdCard!).getByRole('button', { name: 'Salvar' }));
 
     const updatedTitle = await screen.findByRole('heading', { name: 'Finalizar apresentação' });
@@ -128,6 +135,7 @@ describe('Home', () => {
           title: 'Finalizar apresentação',
           description: 'Reunir os materiais',
           priority: 'media',
+          due_date: '2026-07-20T00:00:00',
         }),
       }),
     );
@@ -156,5 +164,61 @@ describe('Home', () => {
         }),
       );
     });
+  });
+
+  it('exibe um aviso temporário ao tentar criar uma tarefa sem título', async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><Home /></MemoryRouter>);
+    await screen.findByRole('heading', { name: 'Revisar proposta' });
+
+    await user.click(screen.getByRole('button', { name: 'Nova tarefa' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Salvar tarefa' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não é possível criar uma tarefa sem título',
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      'http://localhost:8000/tasks/',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('rejeita um título composto apenas por espaços', async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><Home /></MemoryRouter>);
+    await screen.findByRole('heading', { name: 'Revisar proposta' });
+
+    await user.click(screen.getByRole('button', { name: 'Nova tarefa' }));
+    const dialog = screen.getByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Título'), '   ');
+    await user.click(within(dialog).getByRole('button', { name: 'Salvar tarefa' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não é possível criar uma tarefa sem título',
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      'http://localhost:8000/tasks/',
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('mantém o formulário aberto e mostra erro quando a API falha ao criar', async () => {
+    const user = userEvent.setup();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(<MemoryRouter><Home /></MemoryRouter>);
+    await screen.findByRole('heading', { name: 'Revisar proposta' });
+
+    fetchMock.mockImplementationOnce(async () => new Response(null, { status: 500 }));
+    await user.click(screen.getByRole('button', { name: 'Nova tarefa' }));
+    const dialog = screen.getByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Título'), 'Tarefa não salva');
+    await user.click(within(dialog).getByRole('button', { name: 'Salvar tarefa' }));
+
+    expect(await within(dialog).findByText(
+      'Erro ao criar tarefa. Verifique a conexão com a API.',
+    )).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Título')).toHaveValue('Tarefa não salva');
+    expect(screen.queryByRole('heading', { name: 'Tarefa não salva' })).not.toBeInTheDocument();
+    expect(consoleError).toHaveBeenCalled();
   });
 });
