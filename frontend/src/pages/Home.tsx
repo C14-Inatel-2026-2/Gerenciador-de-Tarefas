@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, CheckSquare, ListTodo, LogOut, Plus, X } from 'lucide-react';
+import { Check, CheckSquare, CircleAlert, LayoutGrid, ListChecks, LoaderCircle, LogOut, Plus, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { clearSession, useSession } from '../auth/session';
 import { TaskCard } from '../components/TaskCard';
@@ -95,27 +95,25 @@ export function Home() {
       <aside className="app-sidebar">
         <div className="sidebar-inner">
           <div className="sidebar-brand">
-            <span className="brand-mark" aria-hidden="true"><Check size={17} strokeWidth={2.5} /></span>
+            <span className="brand-mark" aria-hidden="true"><Check size={21} strokeWidth={2.6} /></span>
             <span>Gerenciador de Tarefas</span>
           </div>
 
           <nav className="sidebar-nav" aria-label="Navegação principal">
             <Link className="nav-link" to="/dashboard" aria-current="page">
-              <ListTodo size={17} strokeWidth={1.9} aria-hidden="true" />
+              <LayoutGrid size={18} aria-hidden="true" />
               <span>Minhas tarefas</span>
             </Link>
           </nav>
 
-          <div className="sidebar-spacer" />
-
           <div className="sidebar-account">
+            <span className="account-avatar" aria-hidden="true">{nomeUsuario.slice(0, 2).toLocaleUpperCase('pt-BR')}</span>
             <div className="account-details">
               <div className="account-label">Conectado como</div>
               <div className="account-email" title={session?.email}>{nomeUsuario}</div>
             </div>
-            <button type="button" onClick={clearSession} className="logout-button">
+            <button type="button" onClick={clearSession} className="icon-button logout-button" aria-label="Sair" title="Sair">
               <LogOut size={16} strokeWidth={1.9} aria-hidden="true" />
-              <span>Sair</span>
             </button>
           </div>
         </div>
@@ -123,47 +121,61 @@ export function Home() {
 
       <main className="main-content">
         <div className="content-inner">
-          <header className="page-header">
-            <div>
-              <h1 className="page-title">Minhas tarefas</h1>
-              <p className="page-description">Organize e acompanhe suas atividades.</p>
+          <header className="page-header green-surface">
+            <div className="hero-copy">
+              {nomeUsuario && <p className="hero-greeting">Olá, {nomeUsuario}</p>}
+              <h1>Minhas tarefas</h1>
+              <p className="hero-description">Organize e acompanhe suas atividades.</p>
             </div>
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => {
-                setCreateTaskError('');
-                setIsModalOpen(true);
-              }}
-              className="button-primary"
-            >
-              <Plus size={16} strokeWidth={2} aria-hidden="true" />
-              <span>Nova tarefa</span>
-            </button>
+            <div className="hero-illustration" aria-hidden="true">
+              <div className="hero-illustration-card"><ListChecks size={53} strokeWidth={1.4} /></div>
+            </div>
           </header>
 
-          {isLoading ? (
-            <div role="status" className="feedback-loading">Carregando tarefas...</div>
-          ) : loadError ? (
-            <div role="alert" className="feedback-error">
-              <p>{loadError}</p>
-              <button type="button" onClick={retryLoad} className="button-secondary">
-                Tentar novamente
+          <section className="board-section" aria-labelledby="board-title">
+            <div className="board-toolbar">
+              <h2 id="board-title"><LayoutGrid size={20} aria-hidden="true" /> Quadro de tarefas</h2>
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => {
+                  setCreateTaskError('');
+                  setIsModalOpen(true);
+                }}
+                className="button-primary"
+              >
+                <Plus size={18} aria-hidden="true" />
+                Nova tarefa
               </button>
             </div>
-          ) : tarefas.length > 0 ? (
-            <section className="task-list" aria-label="Lista de tarefas">
-              {tarefas.map((tarefa) => (
-                <TaskCard key={tarefa.id} tarefa={tarefa} onDelete={handleDeleteTarefa} onUpdate={handleUpdateTarefa} />
-              ))}
-            </section>
-          ) : (
-            <div className="empty-state">
-              <span className="empty-state-icon" aria-hidden="true"><CheckSquare size={18} strokeWidth={1.8} /></span>
-              <p className="empty-state-title">Nenhuma tarefa por aqui</p>
-              <p className="empty-state-description">Crie uma tarefa para começar a organizar suas atividades.</p>
-            </div>
-          )}
+
+            {isLoading ? (
+              <div role="status" className="board-feedback">
+                <LoaderCircle className="loading-spinner" size={23} aria-hidden="true" />
+                <p>Carregando tarefas...</p>
+              </div>
+            ) : loadError ? (
+              <div role="alert" className="board-feedback feedback-error">
+                <CircleAlert size={25} aria-hidden="true" />
+                <p>{loadError}</p>
+                <button type="button" onClick={retryLoad} className="button-secondary">
+                  Tentar novamente
+                </button>
+              </div>
+            ) : tarefas.length > 0 ? (
+              <section className="task-list" aria-label="Lista de tarefas">
+                {tarefas.map((tarefa) => (
+                  <TaskCard key={tarefa.id} tarefa={tarefa} onDelete={handleDeleteTarefa} onUpdate={handleUpdateTarefa} />
+                ))}
+              </section>
+            ) : (
+              <div className="board-feedback">
+                <span className="empty-state-icon" aria-hidden="true"><CheckSquare size={22} /></span>
+                <p className="empty-state-title">Nenhuma tarefa por aqui</p>
+                <p>Crie uma tarefa para começar a organizar suas atividades.</p>
+              </div>
+            )}
+          </section>
         </div>
 
         {isModalOpen && (
