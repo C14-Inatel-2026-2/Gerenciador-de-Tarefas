@@ -28,6 +28,7 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
   const [title, setTitle] = useState(tarefa.titulo);
   const [description, setDescription] = useState(tarefa.descricao ?? '');
   const [priority, setPriority] = useState(tarefa.prioridade);
+  const [dueDate, setDueDate] = useState(tarefa.dataVencimento ?? '');
   const saving = useRef(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -68,6 +69,7 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
     setTitle(tarefa.titulo);
     setDescription(tarefa.descricao ?? '');
     setPriority(tarefa.prioridade);
+    setDueDate(tarefa.dataVencimento ?? '');
     setUpdateError('');
     setDeleteError('');
     setIsEditing(true);
@@ -106,7 +108,12 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
               setUpdateError('Informe um título para a tarefa.');
               return;
             }
-            void handleUpdate({ title: title.trim(), description: description.trim() || null, priority });
+            void handleUpdate({
+              title: title.trim(),
+              description: description.trim() || null,
+              priority,
+              due_date: dueDate ? `${dueDate}T00:00:00` : null,
+            });
           }}
         >
           <fieldset disabled={isSaving} className="task-edit-fields">
@@ -124,17 +131,6 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
               />
             </div>
             <div className="field-group">
-              <label htmlFor={`description-${tarefa.id}`} className="field-label">Descrição</label>
-              <textarea
-                id={`description-${tarefa.id}`}
-                maxLength={500}
-                rows={3}
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                className="field-control"
-              />
-            </div>
-            <div className="field-group">
               <label htmlFor={`priority-${tarefa.id}`} className="field-label">Prioridade</label>
               <select
                 id={`priority-${tarefa.id}`}
@@ -146,6 +142,27 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
+            </div>
+            <div className="field-group">
+              <label htmlFor={`due-date-${tarefa.id}`} className="field-label">Data de vencimento</label>
+              <input
+                id={`due-date-${tarefa.id}`}
+                type="date"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.target.value)}
+                className="field-control"
+              />
+            </div>
+            <div className="field-group">
+              <label htmlFor={`description-${tarefa.id}`} className="field-label">Descrição</label>
+              <textarea
+                id={`description-${tarefa.id}`}
+                maxLength={500}
+                rows={3}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                className="field-control"
+              />
             </div>
             {updateError && <p role="alert" className="form-error">{updateError}</p>}
             <div className="task-edit-actions">
@@ -184,7 +201,7 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
         {tarefa.dataVencimento && (
           <span className="task-due-date">
             <CalendarDays size={14} aria-hidden="true" />
-            Vence em {tarefa.dataVencimento}
+            Vence em {new Date(`${tarefa.dataVencimento}T00:00:00`).toLocaleDateString('pt-BR')}
           </span>
         )}
       </div>

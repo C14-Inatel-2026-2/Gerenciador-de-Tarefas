@@ -1,9 +1,10 @@
+import { API_URL, authenticatedFetch } from './api';
 import type { PrioridadeTarefa, StatusTarefa, Tarefa } from '../types';
 
-export const TASKS_URL = 'http://localhost:8000/tasks/';
+export const TASKS_URL = `${API_URL}/tasks/`;
 
 export async function deleteTask(id: string): Promise<void> {
-  const response = await fetch(`${TASKS_URL}${encodeURIComponent(id)}`, {
+  const response = await authenticatedFetch(`${TASKS_URL}${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
   if (!response.ok) {
@@ -32,7 +33,7 @@ export type TaskCreate = {
 export type TaskUpdate = Partial<Pick<ApiTask, 'title' | 'description' | 'priority' | 'status' | 'due_date'>>;
 
 export async function createTask(task: TaskCreate): Promise<Tarefa> {
-  const response = await fetch(TASKS_URL, {
+  const response = await authenticatedFetch(TASKS_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(task),
@@ -47,7 +48,7 @@ export async function createTask(task: TaskCreate): Promise<Tarefa> {
 }
 
 export async function updateTask(id: string, changes: TaskUpdate): Promise<Tarefa> {
-  const response = await fetch(`${TASKS_URL}${encodeURIComponent(id)}`, {
+  const response = await authenticatedFetch(`${TASKS_URL}${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(changes),
@@ -64,13 +65,13 @@ export function toTarefa(task: ApiTask): Tarefa {
     prioridade: task.priority,
     status: task.status,
     dataVencimento: task.due_date
-      ? new Date(task.due_date).toLocaleDateString('pt-BR')
+      ? task.due_date.slice(0, 10)
       : undefined,
   };
 }
 
 export async function getTasks(signal: AbortSignal): Promise<Tarefa[]> {
-  const response = await fetch(TASKS_URL, { signal });
+  const response = await authenticatedFetch(TASKS_URL, { signal });
   if (!response.ok) {
     throw new Error(`Não foi possível carregar as tarefas (HTTP ${response.status}).`);
   }
