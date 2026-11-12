@@ -64,7 +64,7 @@ export function toTarefa(task: ApiTask): Tarefa {
     prioridade: task.priority,
     status: task.status,
     dataVencimento: task.due_date
-      ? new Date(task.due_date).toLocaleDateString('pt-BR')
+      ? task.due_date.slice(0, 10)
       : undefined,
   };
 }

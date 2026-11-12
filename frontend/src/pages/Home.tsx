@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, CheckSquare, ListTodo, LogOut, Plus, X } from 'lucide-react';
+import { AlertCircle, Check, CheckSquare, ListTodo, LogOut, Plus, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { clearSession, useSession } from '../auth/session';
 import { TaskCard } from '../components/TaskCard';
@@ -11,6 +11,7 @@ export function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [createTaskError, setCreateTaskError] = useState('');
+  const [showMissingTitleToast, setShowMissingTitleToast] = useState(false);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -18,9 +19,17 @@ export function Home() {
   const [titulo, setTitulo] = useState('');
   const [prioridade, setPrioridade] = useState<PrioridadeTarefa>('media');
   const [descricao, setDescricao] = useState('');
+  const [dataVencimento, setDataVencimento] = useState('');
 
   const session = useSession();
   const nomeUsuario = session?.email.split('@')[0] ?? '';
+
+  useEffect(() => {
+    if (!showMissingTitleToast) return;
+
+    const timeout = window.setTimeout(() => setShowMissingTitleToast(false), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [showMissingTitleToast]);
 
   const handleUpdateTarefa = async (id: string, changes: TaskUpdate) => {
     const updated = await updateTask(id, changes);
@@ -62,10 +71,11 @@ export function Home() {
 
     const title = titulo.trim();
     if (!title) {
-      setCreateTaskError('Informe um título para a tarefa.');
+      setShowMissingTitleToast(true);
       return;
     }
 
+    setShowMissingTitleToast(false);
     setIsCreatingTask(true);
     setCreateTaskError('');
 
@@ -74,12 +84,14 @@ export function Home() {
         title,
         description: descricao.trim() || null,
         priority: prioridade,
+        due_date: dataVencimento ? `${dataVencimento}T00:00:00` : null,
       });
 
       setTarefas((current) => [...current, newTask]);
       setTitulo('');
       setDescricao('');
       setPrioridade('media');
+      setDataVencimento('');
       setIsModalOpen(false);
       setCreateTaskError('');
     } catch (error) {
@@ -204,7 +216,6 @@ export function Home() {
                       setTitulo(event.target.value);
                       if (createTaskError) setCreateTaskError('');
                     }}
-                    required
                     maxLength={120}
                     autoFocus
                     className="field-control"
@@ -224,6 +235,17 @@ export function Home() {
                     <option value="media">Média</option>
                     <option value="alta">Alta</option>
                   </select>
+                </div>
+
+                <div className="field-group">
+                  <label htmlFor="task-due-date" className="field-label">Data de vencimento</label>
+                  <input
+                    id="task-due-date"
+                    type="date"
+                    value={dataVencimento}
+                    onChange={(event) => setDataVencimento(event.target.value)}
+                    className="field-control"
+                  />
                 </div>
 
                 <div className="field-group">
@@ -259,6 +281,12 @@ export function Home() {
                 </div>
               </form>
             </section>
+          </div>
+        )}
+        {showMissingTitleToast && (
+          <div role="alert" className="toast-error">
+            <AlertCircle size={18} aria-hidden="true" />
+            <span>Não é possível criar uma tarefa sem título</span>
           </div>
         )}
       </main>
