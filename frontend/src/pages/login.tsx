@@ -1,10 +1,14 @@
 import { useRef, useState } from 'react';
-import { login } from '../services/auth';
+import { login, register } from '../services/auth';
 import { ArrowRight, Check, CircleCheck, Flag, LayoutGrid, LockKeyhole, Mail } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { saveSession, useSession } from '../auth/session';
 
 export function Login() {
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [name, setName] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [notice, setNotice] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -18,10 +22,21 @@ export function Login() {
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     if (submitting.current) return;
+    setNotice('');
+    if (isRegistering && (!name.trim() || password !== confirmation)) {
+      setError(!name.trim() ? 'Informe seu nome.' : 'As senhas devem ser iguais.');
+      return;
+    }
     submitting.current = true;
     setIsLoggingIn(true);
     setError('');
     try {
+      if (isRegistering) {
+        await register(name.trim(), email.trim(), password);
+        setIsRegistering(false);
+        setNotice('Conta criada. Caso o acesso falhe, entre com seu e-mail e senha.');
+        setConfirmation('');
+      }
       const token = await login(email.trim(), password);
       saveSession({ email: email.trim(), token });
     } catch (error) {
@@ -43,11 +58,19 @@ export function Login() {
         </div>
 
         <section className="login-panel">
-          <h2>Bem-vindo de volta</h2>
-          <p className="login-description">Entre para acessar seu quadro de tarefas.</p>
+          <h2>{isRegistering ? 'Crie sua conta' : 'Bem-vindo de volta'}</h2>
+          <p className="login-description">{isRegistering ? 'Cadastre-se para organizar suas tarefas.' : 'Entre para acessar seu quadro de tarefas.'}</p>
 
           <form onSubmit={handleLogin} className="login-form">
             {error && <p role="alert" className="form-error">{error}</p>}
+            {notice && <p role="status">{notice}</p>}
+            {isRegistering && (
+              <div className="field-group">
+                <label htmlFor="register-name" className="field-label">Nome</label>
+                <input id="register-name" className="field-control" autoComplete="name"
+                  value={name} onChange={(event) => setName(event.target.value)} required maxLength={120} disabled={isLoggingIn} />
+              </div>
+            )}
             <div className="field-group">
               <label htmlFor="login-email" className="field-label">E-mail</label>
               <div className="field-with-icon">
@@ -78,15 +101,35 @@ export function Login() {
                   onChange={(event) => setPassword(event.target.value)}
                   className="field-control"
                   placeholder="••••••••"
-                  autoComplete="current-password"
+                  autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                  minLength={isRegistering ? 6 : undefined}
+                  maxLength={isRegistering ? 72 : undefined}
                   disabled={isLoggingIn}
                   required
                 />
               </div>
             </div>
 
+            {isRegistering && (
+              <div className="field-group">
+                <label htmlFor="register-confirmation" className="field-label">Confirmar senha</label>
+                <input id="register-confirmation" type="password" className="field-control"
+                  autoComplete="new-password" value={confirmation}
+                  onChange={(event) => setConfirmation(event.target.value)} required disabled={isLoggingIn} />
+              </div>
+            )}
             <button type="submit" disabled={isLoggingIn} className="button-primary login-submit">
-              {isLoggingIn ? 'Entrando...' : 'Entrar'} <ArrowRight size={17} aria-hidden="true" />
+              {isLoggingIn ? 'Aguarde...' : isRegistering ? 'Criar conta' : 'Entrar'} <ArrowRight size={17} aria-hidden="true" />
+            </button>
+            <button type="button" className="button-secondary" disabled={isLoggingIn}
+              onClick={() => {
+                setIsRegistering(!isRegistering);
+                setError('');
+                setNotice('');
+                setPassword('');
+                setConfirmation('');
+              }}>
+              {isRegistering ? 'Voltar ao login' : 'Criar uma conta'}
             </button>
           </form>
         </section>
