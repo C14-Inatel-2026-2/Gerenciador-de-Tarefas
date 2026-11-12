@@ -22,12 +22,14 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    """Campos aceitos na criação de uma tarefa (POST).
-
-    Não inclui `owner_id`: o dono da tarefa é sempre o usuário autenticado
-    (extraído do token), nunca um valor enviado pelo cliente.
-    """
-    pass
+    @field_validator("due_date")
+    @classmethod
+    def validate_due_date_not_in_past(cls, value: Optional[datetime]) -> Optional[datetime]:
+        if value is not None:
+            hoje = datetime.now(value.tzinfo).date()
+            if value.date() < hoje:
+                raise ValueError("A data de vencimento não pode ser anterior à data atual")
+        return value
 
 
 class TaskUpdate(BaseModel):
