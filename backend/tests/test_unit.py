@@ -43,6 +43,13 @@ class TestesSemMock:
     def test_decodificar_token_jwt_invalido_lanca_erro(self):
         with pytest.raises(jwt.PyJWTError):
             security.decode_access_token("token.invalido.123")
+            
+    def test_criar_tarefa_com_data_anterior_a_atual_falha(self):
+        with pytest.raises(ValidationError):
+            schemas.TaskCreate(
+                title="Tarefa com data no passado",
+                due_date="2020-01-01T00:00:00",
+            )
 
 class TestesComMock:
     def test_deletar_tarefa_com_mock_sucesso(self):

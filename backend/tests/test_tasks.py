@@ -315,3 +315,12 @@ def test_tasks_routes_reject_invalid_token(client):
     response = client.get("/tasks/", headers=headers)
 
     assert response.status_code == 401
+
+def test_create_task_with_past_due_date_fails(client, auth_headers):
+    """Não deve permitir criar uma tarefa com data de vencimento anterior à data atual (422)."""
+    payload = {
+        "title": "Tarefa no passado",
+        "due_date": "2020-01-01T00:00:00",
+    }
+    response = client.post("/tasks/", json=payload, headers=auth_headers)
+    assert response.status_code == 422
