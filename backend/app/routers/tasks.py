@@ -1,20 +1,15 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
-from app import models, schemas
-from app.database import get_db
-
 from app import models, schemas
 from app.auth import get_current_user
 from app.database import get_db
+
 router = APIRouter(
     prefix="/tasks",
     tags=["tasks"],
     dependencies=[Depends(get_current_user)],
 )
-
-router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 TASK_NOT_FOUND_DETAIL = "Tarefa não encontrada"
 

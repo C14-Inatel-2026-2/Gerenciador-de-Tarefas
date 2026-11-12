@@ -2,8 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth, tasks
 
-from app.routers import tasks
-
 app = FastAPI(
     title="Gerenciador de Tarefas - API",
     description="API do projeto de Engenharia de Software",
@@ -18,9 +16,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.include_router(tasks.router)
-
 
 @app.get("/")
 def root():
