@@ -1,26 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app import models, schemas, security
+from app import auth, models, schemas
 from app.database import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-EMAIL_EM_USO_DETAIL = "E-mail já cadastrado"
-CREDENCIAIS_INVALIDAS_DETAIL = "E-mail ou senha incorretos"
 
-
-@router.post("/register", response_model=schemas.UserOut, status_code=status.HTTP_201_CREATED)
-def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    """Cria um novo usuário, salvando a senha como hash bcrypt (nunca em texto puro)."""
-    existing = db.query(models.User).filter(models.User.email == user.email).first()
+@router.post("/register", response_model=schemas.UserOut, status_code=201)
+def register_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+    """Cadastra um novo usuário armazenando a senha com hash."""
+    existing = db.query(models.User).filter(models.User.email == user_in.email).first()
     if existing:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=EMAIL_EM_USO_DETAIL)
+        raise HTTPException(status_code=400, detail="E-mail já cadastrado")
 
     db_user = models.User(
-        nome=user.nome,
-        email=user.email,
-        senha=security.hash_password(user.senha),
+        nome=user_in.nome,
+        email=user_in.email,
+        senha=auth.hash_password(user_in.senha),
     )
     db.add(db_user)
     db.commit()
@@ -29,11 +26,17 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=schemas.Token)
-def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
-    """Valida e-mail/senha e devolve um token JWT para uso nas rotas protegidas."""
+def login_user(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
+    """Autentica o usuário por e-mail e senha e retorna um token JWT."""
     user = db.query(models.User).filter(models.User.email == credentials.email).first()
-    if not user or not security.verify_password(credentials.senha, user.senha):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=CREDENCIAIS_INVALIDAS_DETAIL)
+    if not user or not auth.verify_password(credentials.senha, user.senha):
+        raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
 
-    access_token = security.create_access_token(user.id)
-    return schemas.Token(access_token=access_token)
+    token = auth.create_access_token({"sub": user.email, "user_id": user.id})
+    return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get("/me", response_model=schemas.UserOut)
+def get_me(current_user: models.User = Depends(auth.get_current_user)):
+    """Retorna os dados do usuário atualmente autenticado."""
+    return current_user

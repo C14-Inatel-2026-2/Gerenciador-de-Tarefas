@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
-
+from app import auth, models
 from app.main import app
 from app.database import Base, get_db
 
@@ -34,21 +34,24 @@ def setup_database():
     yield
     Base.metadata.drop_all(bind=engine)
 
-
 @pytest.fixture()
 def client():
-    return TestClient(app)
-
-
-def registrar_e_logar(client, email="usuario@teste.com", senha="senha123"):
-    """Cria um usuário e devolve os headers de Authorization já prontos para uso."""
-    client.post("/auth/register", json={"nome": "Usuario Teste", "email": email, "senha": senha})
-    response = client.post("/auth/login", json={"email": email, "senha": senha})
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-
-
+    """Cliente autenticado padrão para os testes das rotas protegidas."""
+    db = TestingSessionLocal()
+    default_user = models.User(
+        nome="Usuário Autenticado",
+        email="auth@inatel.br",
+        senha=auth.hash_password("senha123"),
+    )
+    db.add(default_user)
+    db.commit()
+    db.refresh(default_user)
+    token = auth.create_access_token({"sub": default_user.email, "user_id": default_user.id})
+    db.close()
+    test_client = TestClient(app)
+    test_client.headers["Authorization"] = f"Bearer {token}"
+    return test_client
 @pytest.fixture()
-def auth_headers(client):
-    """Headers de Authorization de um usuário de teste já cadastrado e logado."""
-    return registrar_e_logar(client)
+def unauthenticated_client():
+    """Cliente sem token de autenticação para testar rotas públicas (/auth) e bloqueio 401."""
+    return TestClient(app)

@@ -1,10 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.database import Base, engine
 from app.routers import auth, tasks
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Gerenciador de Tarefas - API",
@@ -21,10 +17,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(tasks.router)
-
-
 @app.get("/")
 def root():
     return {"status": "ok", "message": "API do Gerenciador de Tarefas no ar"}
+
+app.include_router(auth.router)
+app.include_router(tasks.router)

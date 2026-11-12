@@ -1,11 +1,16 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from app import models, schemas
+from app.auth import get_current_user
 from app.database import get_db
 from app.dependencies import get_current_user
 
-router = APIRouter(prefix="/tasks", tags=["tasks"])
+router = APIRouter(
+    prefix="/tasks",
+    tags=["tasks"],
+    dependencies=[Depends(get_current_user)],
+)
 
 TASK_NOT_FOUND_DETAIL = "Tarefa não encontrada"
 
@@ -35,15 +40,6 @@ def create_task(
     db.commit()
     db.refresh(db_task)
     return db_task
-
-
-@router.get("/", response_model=list[schemas.TaskOut])
-def list_tasks(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
-):
-    """Lista as tarefas do usuário autenticado."""
-    return db.query(models.Task).filter(models.Task.owner_id == current_user.id).all()
 
 
 @router.get("/{task_id}", response_model=schemas.TaskOut)
@@ -87,3 +83,17 @@ def delete_task(
     db.delete(task)
     db.commit()
     return None
+
+@router.get("/", response_model=list[schemas.TaskOut])
+def list_tasks(
+    status: Optional[models.TaskStatus] = None,
+    priority: Optional[models.TaskPriority] = None,
+    db: Session = Depends(get_db),
+):
+    """Lista todas as tarefas cadastradas, com filtros opcionais de status e prioridade."""
+    query = db.query(models.Task)
+    if status is not None:
+        query = query.filter(models.Task.status == status)
+    if priority is not None:
+        query = query.filter(models.Task.priority == priority)
+    return query.all()
