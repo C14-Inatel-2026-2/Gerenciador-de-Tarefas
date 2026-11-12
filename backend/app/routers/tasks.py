@@ -2,7 +2,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import models, schemas
-from app.auth import get_current_user
 from app.database import get_db
 from app.dependencies import get_current_user
 
@@ -89,9 +88,10 @@ def list_tasks(
     status: Optional[models.TaskStatus] = None,
     priority: Optional[models.TaskPriority] = None,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
 ):
-    """Lista todas as tarefas cadastradas, com filtros opcionais de status e prioridade."""
-    query = db.query(models.Task)
+    """Lista as tarefas do usuário autenticado, com filtros opcionais de status e prioridade."""
+    query = db.query(models.Task).filter(models.Task.owner_id == current_user.id)
     if status is not None:
         query = query.filter(models.Task.status == status)
     if priority is not None:
