@@ -88,10 +88,11 @@ class TestRoutersTasksComMock:
     def test_buscar_tarefa_com_mock_sucesso(self):
         """[Com Mock - Positivo] Busca tarefa existente com retorno mockado."""
         mock_db = MagicMock(spec=Session)
-        tarefa_simulada = models.Task(id=1, title="Tarefa Encontrada")
+        usuario_simulado = models.User(id=1, nome="Teste", email="teste@teste.com", senha="hash")
+        tarefa_simulada = models.Task(id=1, title="Tarefa Encontrada", owner_id=1)
         mock_db.query.return_value.filter.return_value.first.return_value = tarefa_simulada
 
-        resultado = tasks.get_task(task_id=1, db=mock_db)
+        resultado = tasks.get_task(task_id=1, db=mock_db, current_user=usuario_simulado)
 
         assert resultado == tarefa_simulada
         assert resultado.id == 1
@@ -100,16 +101,20 @@ class TestRoutersTasksComMock:
     def test_atualizar_tarefa_parcial_com_mock_sucesso(self):
         """[Com Mock - Positivo] Atualiza apenas os campos enviados via PATCH usando mock."""
         mock_db = MagicMock(spec=Session)
+        usuario_simulado = models.User(id=2, nome="Teste", email="teste2@teste.com", senha="hash")
         tarefa_existente = models.Task(
             id=2,
             title="Título Antigo",
             priority=models.TaskPriority.baixa,
             status=models.TaskStatus.pendente,
+            owner_id=2,
         )
         mock_db.query.return_value.filter.return_value.first.return_value = tarefa_existente
         atualizacao = schemas.TaskUpdate(status=models.TaskStatus.concluida)
 
-        resultado = tasks.update_task(task_id=2, task_update=atualizacao, db=mock_db)
+        resultado = tasks.update_task(
+            task_id=2, task_update=atualizacao, db=mock_db, current_user=usuario_simulado
+        )
 
         assert resultado.status == models.TaskStatus.concluida
         assert resultado.title == "Título Antigo"
@@ -119,10 +124,11 @@ class TestRoutersTasksComMock:
     def test_buscar_tarefa_com_mock_nao_encontrada(self):
         """[Com Mock - Negativo] Deve lançar 404 com a constante padrão quando a tarefa não existir."""
         mock_db = MagicMock(spec=Session)
+        usuario_simulado = models.User(id=1, nome="Teste", email="teste@teste.com", senha="hash")
         mock_db.query.return_value.filter.return_value.first.return_value = None
 
         with pytest.raises(HTTPException) as exc:
-            tasks.get_task(task_id=999, db=mock_db)
+            tasks.get_task(task_id=999, db=mock_db, current_user=usuario_simulado)
 
         assert exc.value.status_code == 404
         assert exc.value.detail == tasks.TASK_NOT_FOUND_DETAIL
@@ -130,10 +136,11 @@ class TestRoutersTasksComMock:
     def test_deletar_tarefa_com_mock_nao_encontrada(self):
         """[Com Mock - Negativo] Deve lançar 404 e não chamar delete/commit se a tarefa não existir."""
         mock_db = MagicMock(spec=Session)
+        usuario_simulado = models.User(id=1, nome="Teste", email="teste@teste.com", senha="hash")
         mock_db.query.return_value.filter.return_value.first.return_value = None
 
         with pytest.raises(HTTPException) as exc:
-            tasks.delete_task(task_id=999, db=mock_db)
+            tasks.delete_task(task_id=999, db=mock_db, current_user=usuario_simulado)
 
         assert exc.value.status_code == 404
         assert exc.value.detail == tasks.TASK_NOT_FOUND_DETAIL

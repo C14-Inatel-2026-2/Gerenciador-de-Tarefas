@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { CalendarDays, Pencil, Trash2 } from 'lucide-react';
+import { CalendarDays, ChevronDown, Flag, Pencil, Trash2 } from 'lucide-react';
 import type { PrioridadeTarefa, StatusTarefa, Tarefa } from '../types';
 import type { TaskUpdate } from '../services/tasks';
 
@@ -19,18 +19,6 @@ const statusLabels: Record<StatusTarefa, string> = {
   pendente: 'Pendente',
   em_andamento: 'Em andamento',
   concluida: 'Concluída',
-};
-
-const priorityClasses: Record<PrioridadeTarefa, string> = {
-  baixa: 'badge-priority-low',
-  media: 'badge-priority-medium',
-  alta: 'badge-priority-high',
-};
-
-const statusClasses: Record<StatusTarefa, string> = {
-  pendente: 'badge-status-pending',
-  em_andamento: 'badge-status-progress',
-  concluida: 'badge-status-done',
 };
 
 export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
@@ -89,28 +77,27 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
 
   return (
     <article className="task-card">
-      <div className="task-card-heading">
-        <div>
-          <h2 className="task-title">{tarefa.titulo}</h2>
-          {tarefa.descricao && <p className="task-description">{tarefa.descricao}</p>}
-        </div>
-        <div className="task-badges">
-          <span className={`badge ${priorityClasses[tarefa.prioridade]}`}>
-            Prioridade: {priorityLabels[tarefa.prioridade]}
-          </span>
-          <select
-            aria-label={`Status da tarefa: ${tarefa.titulo}`}
-            value={tarefa.status}
-            disabled={isSaving || isDeleting || isEditing}
-            onChange={(event) => void handleUpdate({ status: event.target.value as StatusTarefa })}
-            className={`badge status-select ${statusClasses[tarefa.status]}`}
-          >
-            {Object.entries(statusLabels).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </div>
+      <div className="task-card-top">
+        <span className={`priority-badge priority-${tarefa.prioridade}`}>
+          <Flag size={13} aria-hidden="true" /> {priorityLabels[tarefa.prioridade]}
+          <span className="sr-only"> prioridade</span>
+        </span>
+        {!isEditing && (
+          <div className="task-actions">
+            <button type="button" onClick={startEditing} disabled={isSaving || isDeleting}
+              aria-label={`Editar tarefa: ${tarefa.titulo}`} title="Editar tarefa" className="icon-button">
+              <Pencil size={15} aria-hidden="true" />
+            </button>
+            <button type="button" onClick={handleDelete} disabled={isDeleting || isSaving}
+              aria-label={`Excluir tarefa: ${tarefa.titulo}`} title="Excluir tarefa" className="icon-button icon-button-danger">
+              <Trash2 size={15} aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </div>
+
+      <h3 className="task-title">{tarefa.titulo}</h3>
+      {tarefa.descricao && <p className="task-description">{tarefa.descricao}</p>}
 
       {isEditing && (
         <form
@@ -129,7 +116,7 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
             });
           }}
         >
-          <fieldset disabled={isSaving} className="grid gap-3 border-0 p-0">
+          <fieldset disabled={isSaving} className="task-edit-fields">
             <legend className="field-label">Editar tarefa</legend>
             <div className="field-group">
               <label htmlFor={`title-${tarefa.id}`} className="field-label">Título</label>
@@ -151,9 +138,9 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
                 onChange={(event) => setPriority(event.target.value as PrioridadeTarefa)}
                 className="field-control"
               >
-                <option value="baixa">Baixa</option>
-                <option value="media">Média</option>
-                <option value="alta">Alta</option>
+                {Object.entries(priorityLabels).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
               </select>
             </div>
             <div className="field-group">
@@ -198,41 +185,30 @@ export function TaskCard({ tarefa, onDelete, onUpdate }: TaskCardProps) {
       )}
 
       <div className="task-card-footer">
-        <div className="task-meta">
-          {tarefa.dataVencimento && (
-            <span className="task-due-date">
-              <CalendarDays size={14} strokeWidth={1.8} aria-hidden="true" />
-              Vence em {new Date(`${tarefa.dataVencimento}T00:00:00`).toLocaleDateString('pt-BR')}
-            </span>
-          )}
-          {isSaving && <span role="status">Salvando alterações...</span>}
+        <div className="status-control" data-status={tarefa.status}>
+          <select
+            aria-label={`Status da tarefa: ${tarefa.titulo}`}
+            value={tarefa.status}
+            disabled={isSaving || isDeleting || isEditing}
+            onChange={(event) => void handleUpdate({ status: event.target.value as StatusTarefa })}
+          >
+            {Object.entries(statusLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+          <ChevronDown size={13} aria-hidden="true" />
         </div>
-        {!isEditing && (
-          <div className="task-actions">
-            <button
-              type="button"
-              onClick={startEditing}
-              disabled={isSaving || isDeleting}
-              aria-label={`Editar tarefa: ${tarefa.titulo}`}
-              className="icon-button"
-            >
-              <Pencil size={15} strokeWidth={1.9} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isDeleting || isSaving}
-              aria-label={`Excluir tarefa: ${tarefa.titulo}`}
-              className="icon-button icon-button-danger"
-            >
-              <Trash2 size={15} strokeWidth={1.9} aria-hidden="true" />
-            </button>
-          </div>
+        {tarefa.dataVencimento && (
+          <span className="task-due-date">
+            <CalendarDays size={14} aria-hidden="true" />
+            Vence em {new Date(`${tarefa.dataVencimento}T00:00:00`).toLocaleDateString('pt-BR')}
+          </span>
         )}
       </div>
-      {updateError && !isEditing && <p role="alert" className="inline-error">{updateError}</p>}
-      {deleteError && <p role="alert" className="inline-error">{deleteError}</p>}
-      {isDeleting && <p role="status" className="inline-error">Excluindo tarefa...</p>}
+      {isSaving && <p role="status" className="card-status">Salvando alterações...</p>}
+      {updateError && !isEditing && <p role="alert" className="form-error">{updateError}</p>}
+      {deleteError && <p role="alert" className="form-error">{deleteError}</p>}
+      {isDeleting && <p role="status" className="card-status">Excluindo tarefa...</p>}
     </article>
   );
 }

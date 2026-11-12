@@ -37,4 +37,19 @@ def setup_database():
 
 @pytest.fixture()
 def client():
+    """Cliente sem autenticação por padrão; rotas protegidas usam `auth_headers`."""
     return TestClient(app)
+
+
+def registrar_e_logar(client, email="usuario@teste.com", senha="senha123"):
+    """Cria um usuário e devolve os headers de Authorization já prontos para uso."""
+    client.post("/auth/register", json={"nome": "Usuario Teste", "email": email, "senha": senha})
+    response = client.post("/auth/login", json={"email": email, "senha": senha})
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture()
+def auth_headers(client):
+    """Headers de Authorization de um usuário de teste já cadastrado e logado."""
+    return registrar_e_logar(client)
