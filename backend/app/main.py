@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routers import auth, tasks
 
 from app.routers import tasks
 
@@ -24,3 +25,6 @@ app.include_router(tasks.router)
 @app.get("/")
 def root():
     return {"status": "ok", "message": "API do Gerenciador de Tarefas no ar"}
+
+app.include_router(auth.router)
+app.include_router(tasks.router)

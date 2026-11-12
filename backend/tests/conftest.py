@@ -5,6 +5,9 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.database import Base, get_db
+from app import auth, models
+from app.main import app
+from app.database import Base, get_db
 
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
 
@@ -37,4 +40,26 @@ def setup_database():
 
 @pytest.fixture()
 def client():
+    return TestClient(app)
+
+@pytest.fixture()
+def client():
+    """Cliente autenticado padrão para os testes das rotas protegidas."""
+    db = TestingSessionLocal()
+    default_user = models.User(
+        nome="Usuário Autenticado",
+        email="auth@inatel.br",
+        senha=auth.hash_password("senha123"),
+    )
+    db.add(default_user)
+    db.commit()
+    db.refresh(default_user)
+    token = auth.create_access_token({"sub": default_user.email, "user_id": default_user.id})
+    db.close()
+    test_client = TestClient(app)
+    test_client.headers["Authorization"] = f"Bearer {token}"
+    return test_client
+@pytest.fixture()
+def unauthenticated_client():
+    """Cliente sem token de autenticação para testar rotas públicas (/auth) e bloqueio 401."""
     return TestClient(app)

@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock
 from app.database import Base
+from fastapi import HTTPException
+from app import auth, models, schemas
 
 import pytest
 from pydantic import ValidationError
@@ -27,6 +29,24 @@ class TestesSemMock:
         tabelas = set(Base.metadata.tables.keys())
         assert "users" in tabelas
         assert "tasks" in tabelas
+
+    def test_hash_e_verificacao_de_senha(self):
+        senha_hash = auth.hash_password("minha_senha_123")
+        assert senha_hash != "minha_senha_123"
+        assert auth.verify_password("minha_senha_123", senha_hash) is True
+        assert auth.verify_password("senha_errada", senha_hash) is False
+
+    def test_criacao_e_decodificacao_de_token_jwt(self):
+        token = auth.create_access_token({"sub": "joao@inatel.br", "user_id": 7})
+        payload = auth.decode_access_token(token)
+        assert payload["sub"] == "joao@inatel.br"
+        assert payload["user_id"] == 7
+        assert "exp" in payload
+        
+    def test_decodificar_token_jwt_invalido_lanca_401(self):
+        with pytest.raises(HTTPException) as exc:
+            auth.decode_access_token("token.invalido.123")
+        assert exc.value.status_code == 401
 
 class TestesComMock:
     def test_deletar_tarefa_com_mock_sucesso(self):
