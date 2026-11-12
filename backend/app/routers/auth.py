@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app import auth, models, schemas
+from app import models, schemas, security
 from app.database import get_db
+from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -17,7 +18,7 @@ def register_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = models.User(
         nome=user_in.nome,
         email=user_in.email,
-        senha=auth.hash_password(user_in.senha),
+        senha=security.hash_password(user_in.senha),
     )
     db.add(db_user)
     db.commit()
@@ -29,14 +30,14 @@ def register_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
 def login_user(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     """Autentica o usuário por e-mail e senha e retorna um token JWT."""
     user = db.query(models.User).filter(models.User.email == credentials.email).first()
-    if not user or not auth.verify_password(credentials.senha, user.senha):
+    if not user or not security.verify_password(credentials.senha, user.senha):
         raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
 
-    token = auth.create_access_token({"sub": user.email, "user_id": user.id})
+    token = security.create_access_token(user.id)
     return {"access_token": token, "token_type": "bearer"}
 
 
 @router.get("/me", response_model=schemas.UserOut)
-def get_me(current_user: models.User = Depends(auth.get_current_user)):
+def get_me(current_user: models.User = Depends(get_current_user)):
     """Retorna os dados do usuário atualmente autenticado."""
     return current_user

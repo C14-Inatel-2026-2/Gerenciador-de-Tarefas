@@ -1,13 +1,12 @@
 from unittest.mock import MagicMock
 from app.database import Base
-from fastapi import HTTPException
-from app import auth, models, schemas
+from app import models, schemas, security
 
+import jwt
 import pytest
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app import models, schemas
 from app.routers import tasks
 
 class TestesSemMock:
@@ -31,22 +30,19 @@ class TestesSemMock:
         assert "tasks" in tabelas
 
     def test_hash_e_verificacao_de_senha(self):
-        senha_hash = auth.hash_password("minha_senha_123")
+        senha_hash = security.hash_password("minha_senha_123")
         assert senha_hash != "minha_senha_123"
-        assert auth.verify_password("minha_senha_123", senha_hash) is True
-        assert auth.verify_password("senha_errada", senha_hash) is False
+        assert security.verify_password("minha_senha_123", senha_hash) is True
+        assert security.verify_password("senha_errada", senha_hash) is False
 
     def test_criacao_e_decodificacao_de_token_jwt(self):
-        token = auth.create_access_token({"sub": "joao@inatel.br", "user_id": 7})
-        payload = auth.decode_access_token(token)
-        assert payload["sub"] == "joao@inatel.br"
-        assert payload["user_id"] == 7
-        assert "exp" in payload
-        
-    def test_decodificar_token_jwt_invalido_lanca_401(self):
-        with pytest.raises(HTTPException) as exc:
-            auth.decode_access_token("token.invalido.123")
-        assert exc.value.status_code == 401
+        token = security.create_access_token(7)
+        user_id = security.decode_access_token(token)
+        assert user_id == 7
+
+    def test_decodificar_token_jwt_invalido_lanca_erro(self):
+        with pytest.raises(jwt.PyJWTError):
+            security.decode_access_token("token.invalido.123")
 
 class TestesComMock:
     def test_deletar_tarefa_com_mock_sucesso(self):
@@ -74,14 +70,17 @@ class TestesComMock:
 
     def test_listar_tarefas_com_filtros_status_e_prioridade_mock(self):
         mock_db = MagicMock(spec=Session)
+        usuario_simulado = models.User(id=1, nome="Teste", email="teste@teste.com", senha="hash")
         query_mock = mock_db.query.return_value
-        filter_status_mock = query_mock.filter.return_value
+        filter_owner_mock = query_mock.filter.return_value
+        filter_status_mock = filter_owner_mock.filter.return_value
         filter_priority_mock = filter_status_mock.filter.return_value
         tarefa_esperada = models.Task(
             id=1,
             title="Tarefa Filtrada",
             status=models.TaskStatus.pendente,
             priority=models.TaskPriority.alta,
+            owner_id=1,
         )
         filter_priority_mock.all.return_value = [tarefa_esperada]
 
@@ -89,8 +88,10 @@ class TestesComMock:
             status=models.TaskStatus.pendente,
             priority=models.TaskPriority.alta,
             db=mock_db,
+            current_user=usuario_simulado,
         )
 
         assert resultado == [tarefa_esperada]
         query_mock.filter.assert_called_once()
+        filter_owner_mock.filter.assert_called_once()
         filter_status_mock.filter.assert_called_once()

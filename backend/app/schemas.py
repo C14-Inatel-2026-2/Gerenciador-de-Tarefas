@@ -56,43 +56,30 @@ class TaskOut(TaskBase):
 
 
 class UserCreate(BaseModel):
-    """Campos aceitos no cadastro de um novo usuário."""
+    """Campos aceitos no cadastro de um novo usuário (POST /auth/register).
+
+    max_length=72 porque o bcrypt ignora bytes além do 72º caractere da senha.
+    """
     nome: str = Field(..., min_length=1, max_length=120)
     email: str = Field(..., min_length=3, max_length=255)
     senha: str = Field(..., min_length=6, max_length=72)
 
 
-class UserOut(BaseModel):
-    """O que a API devolve para o cliente após cadastro (nunca a senha)."""
-    id: int
-    nome: str
-    email: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class LoginRequest(BaseModel):
-    email: str
-    senha: str
-
-
-    model_config = ConfigDict(from_attributes=True)
-
-class UserCreate(BaseModel):
-    """Campos aceitos no cadastro de um usuário (POST /auth/register)."""
-    nome: str = Field(..., min_length=1, max_length=120)
-    email: str = Field(..., min_length=3, max_length=255)
-    senha: str = Field(..., min_length=4, max_length=128)
 class UserLogin(BaseModel):
     """Credenciais aceitas no login (POST /auth/login)."""
     email: str = Field(..., min_length=3)
     senha: str = Field(..., min_length=1)
+
+
 class UserOut(BaseModel):
-    """Dados públicos do usuário devolvidos pela API."""
+    """Dados públicos do usuário devolvidos pela API (nunca a senha)."""
     id: int
     nome: str
     email: str
+
     model_config = ConfigDict(from_attributes=True)
+
+
 class Token(BaseModel):
     """Resposta de autenticação contendo o token JWT."""
     access_token: str
