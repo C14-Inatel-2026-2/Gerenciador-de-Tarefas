@@ -5,7 +5,7 @@ const SESSION_EVENT = 'task-manager.session-change';
 
 type Session = {
   email: string;
-  token?: string;
+  token: string;
 };
 
 function getSnapshot(): string | null {
@@ -17,7 +17,7 @@ function getSnapshot(): string | null {
       typeof session !== 'object' || session === null ||
       !('email' in session) || typeof session.email !== 'string' ||
       !session.email.trim() ||
-      ('token' in session && (typeof session.token !== 'string' || !session.token.trim()))
+      !('token' in session) || typeof session.token !== 'string' || !session.token.trim()
     ) return null;
     return stored;
   } catch {
@@ -43,6 +43,11 @@ export function saveSession(session: Session) {
 export function clearSession() {
   localStorage.removeItem(SESSION_KEY);
   window.dispatchEvent(new Event(SESSION_EVENT));
+}
+
+export function getSession(): Session | null {
+  const stored = getSnapshot();
+  return stored ? JSON.parse(stored) as Session : null;
 }
 
 export function useSession(): Session | null {

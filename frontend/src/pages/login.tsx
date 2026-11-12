@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { login } from '../services/auth';
 import { ArrowRight, Check, CircleCheck, Flag, LayoutGrid, LockKeyhole, Mail } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { saveSession, useSession } from '../auth/session';
@@ -9,16 +10,27 @@ export function Login() {
 
   const session = useSession();
   const [error, setError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const submitting = useRef(false);
 
   if (session) return <Navigate to="/dashboard" replace />;
 
-  const handleLogin = (event: React.FormEvent) => {
+  const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
+    setIsLoggingIn(true);
     setError('');
     try {
-      saveSession({ email: email.trim() });
-    } catch {
-      setError('Não foi possível guardar a sessão. Permita o armazenamento no navegador e tente novamente.');
+      const token = await login(email.trim(), password);
+      saveSession({ email: email.trim(), token });
+    } catch (error) {
+      setError(error instanceof TypeError
+        ? 'Não foi possível conectar à API. Tente novamente.'
+        : error instanceof Error ? error.message : 'Falha ao entrar. Tente novamente.');
+    } finally {
+      submitting.current = false;
+      setIsLoggingIn(false);
     }
   };
 
@@ -48,6 +60,8 @@ export function Login() {
                   className="field-control"
                   placeholder="seu@email.com"
                   autoComplete="email"
+                  maxLength={255}
+                  disabled={isLoggingIn}
                   required
                 />
               </div>
@@ -65,13 +79,14 @@ export function Login() {
                   className="field-control"
                   placeholder="••••••••"
                   autoComplete="current-password"
+                  disabled={isLoggingIn}
                   required
                 />
               </div>
             </div>
 
-            <button type="submit" className="button-primary login-submit">
-              Entrar <ArrowRight size={17} aria-hidden="true" />
+            <button type="submit" disabled={isLoggingIn} className="button-primary login-submit">
+              {isLoggingIn ? 'Entrando...' : 'Entrar'} <ArrowRight size={17} aria-hidden="true" />
             </button>
           </form>
         </section>

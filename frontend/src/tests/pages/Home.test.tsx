@@ -10,7 +10,7 @@ describe('Home', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorage.setItem('task-manager.session', JSON.stringify({ email: 'ana@example.com' }));
+    localStorage.setItem('task-manager.session', JSON.stringify({ email: 'ana@example.com', token: 'test-token' }));
     apiTasks = [{
       id: 1,
       title: 'Revisar proposta',
@@ -91,7 +91,7 @@ describe('Home', () => {
     expect(screen.getByText('Conferir os últimos detalhes')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:8000/tasks/',
-      { signal: expect.any(AbortSignal) },
+      { signal: expect.any(AbortSignal), headers: expect.any(Headers) },
     );
 
     await user.click(screen.getByRole('button', { name: 'Nova tarefa' }));
@@ -146,7 +146,7 @@ describe('Home', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: 'Finalizar apresentação' })).not.toBeInTheDocument();
     });
-    expect(fetchMock).toHaveBeenCalledWith('http://localhost:8000/tasks/2', { method: 'DELETE' });
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:8000/tasks/2', { method: 'DELETE', headers: expect.any(Headers) });
   });
 
   it('permite alterar o status pela lista', async () => {

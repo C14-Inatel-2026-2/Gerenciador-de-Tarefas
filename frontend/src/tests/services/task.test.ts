@@ -1,4 +1,4 @@
-import{afterEach, describe, expect, it, vi} from 'vitest';
+import{beforeEach, afterEach, describe, expect, it, vi} from 'vitest';
 import{deleteTask, getTasks, TASKS_URL, toTarefa} from '../../services/tasks';
 import type {ApiTask} from '../../services/tasks';
 
@@ -84,8 +84,18 @@ describe('toTarefa', ()=> {
 // Testes mocks
 
 describe('serviços de tarefas com mock', () => {
+    beforeEach(() => {
+        localStorage.setItem('task-manager.session', JSON.stringify({ email: 'ana@example.com', token: 'test-token' }));
+    });
     afterEach(() => {
         vi.unstubAllGlobals();
+        localStorage.clear();
+    });
+
+    it('limpa a sessão quando o token ? recusado', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 401 })));
+        await expect(getTasks(new AbortController().signal)).rejects.toThrow('Sua sessão expirou');
+        expect(localStorage.getItem('task-manager.session')).toBeNull();
     });
 
     it('carrega e converte as tarefas retornadas pela API', async () => {
@@ -115,7 +125,9 @@ describe('serviços de tarefas com mock', () => {
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock).toHaveBeenCalledWith(TASKS_URL, {
             signal: controller.signal,
+            headers: expect.any(Headers),
         });
+        expect(fetchMock.mock.calls[0][1].headers.get('Authorization')).toBe('Bearer test-token');
         expect(resultado).toEqual([
             {
                 id: '20',
@@ -154,6 +166,7 @@ describe('serviços de tarefas com mock', () => {
         expect(fetchMock).toHaveBeenCalledTimes(1);
         expect(fetchMock).toHaveBeenCalledWith(`${TASKS_URL}20`, {
             method: 'DELETE',
+            headers: expect.any(Headers),
         });
     });
 
