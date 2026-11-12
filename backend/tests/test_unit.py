@@ -51,10 +51,11 @@ class TestesSemMock:
 class TestesComMock:
     def test_deletar_tarefa_com_mock_sucesso(self):
         mock_db = MagicMock(spec=Session)
-        tarefa_simulada = models.Task(id=5, title="Tarefa a remover")
+        usuario_simulado = models.User(id=1, nome="Teste", email="teste@teste.com", senha="hash")
+        tarefa_simulada = models.Task(id=5, title="Tarefa a remover", owner_id=1)
         mock_db.query.return_value.filter.return_value.first.return_value = tarefa_simulada
 
-        resultado = tasks.delete_task(task_id=5, db=mock_db)
+        resultado = tasks.delete_task(task_id=5, db=mock_db, current_user=usuario_simulado)
 
         mock_db.delete.assert_called_once_with(tarefa_simulada)
         mock_db.commit.assert_called_once()
@@ -62,11 +63,12 @@ class TestesComMock:
 
     def test_criar_tarefa_propaga_erro_quando_commit_falha(self):
         mock_db = MagicMock(spec=Session)
+        usuario_simulado = models.User(id=1, nome="Teste", email="teste@teste.com", senha="hash")
         mock_db.commit.side_effect = Exception("Erro de conexão com o banco")
         nova_tarefa = schemas.TaskCreate(title="Tarefa que vai falhar ao salvar")
 
         with pytest.raises(Exception, match="Erro de conexão com o banco"):
-            tasks.create_task(task=nova_tarefa, db=mock_db)
+            tasks.create_task(task=nova_tarefa, db=mock_db, current_user=usuario_simulado)
 
         mock_db.add.assert_called_once()
 

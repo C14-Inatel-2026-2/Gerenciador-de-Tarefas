@@ -1,21 +1,21 @@
 import { useState } from 'react';
+import { Check } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { saveSession, useSession } from '../auth/session';
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   const session = useSession();
   const [error, setError] = useState('');
 
   if (session) return <Navigate to="/dashboard" replace />;
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = (event: React.FormEvent) => {
+    event.preventDefault();
     setError('');
     try {
-      // Login simulado até a integração com a API de autenticação.
       saveSession({ email: email.trim() });
     } catch {
       setError('Não foi possível guardar a sessão. Permita o armazenamento no navegador e tente novamente.');
@@ -23,60 +23,51 @@ export function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 px-4">
-      
-      {/* Título do Projeto */}
-      <h1 className="mb-8 text-center text-4xl font-extrabold text-blue-400">
-        Gerenciador de Tarefas
-      </h1>
+    <main className="login-shell">
+      <div className="login-content">
+        <div className="login-brand">
+          <span className="brand-mark" aria-hidden="true"><Check size={17} strokeWidth={2.5} /></span>
+          <h1>Gerenciador de Tarefas</h1>
+        </div>
 
-      {/* Caixa de Login */}
-      <div className="w-full max-w-md rounded-2xl bg-slate-800 p-8 shadow-xl border border-slate-700">
-        <h2 className="mb-6 text-center text-2xl font-bold text-white">
-          Acessar Conta
-        </h2>
-        
-        <form onSubmit={handleLogin} className="space-y-5">
-          {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-          {/* Campo de E-mail */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-300">
-              E-mail
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="seu@email.com"
-              required
-            />
-          </div>
+        <section className="login-panel">
+          <h2 className="login-title">Acessar conta</h2>
+          <p className="login-description">Entre para acessar suas tarefas.</p>
 
-          {/* Campo de Senha */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-300">
-              Senha
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="••••••••"
-              required
-            />
-          </div>
+          <form onSubmit={handleLogin} className="login-form">
+            {error && <p role="alert" className="form-error">{error}</p>}
+            <div className="field-group">
+              <label htmlFor="login-email" className="field-label">E-mail</label>
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                className="field-control"
+                placeholder="seu@email.com"
+                autoComplete="email"
+                required
+              />
+            </div>
 
-          {/* Botão de Submit */}
-          <button
-            type="submit"
-            className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-2 text-center font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-800 transition-colors"
-          >
-            Entrar
-          </button>
-        </form>
+            <div className="field-group">
+              <label htmlFor="login-password" className="field-label">Senha</label>
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="field-control"
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+
+            <button type="submit" className="button-primary">Entrar</button>
+          </form>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
