@@ -5,6 +5,15 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models import TaskPriority, TaskStatus
 
+BLANK_TITLE_ERROR = "O título da tarefa não pode estar em branco"
+
+
+def ensure_title_not_blank(value: Optional[str]) -> str:
+    """Garante que o título informado não seja vazio nem contenha apenas espaços."""
+    if value is None or not value.strip():
+        raise ValueError(BLANK_TITLE_ERROR)
+    return value
+
 
 class TaskBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=120)
@@ -16,9 +25,7 @@ class TaskBase(BaseModel):
     @field_validator("title")
     @classmethod
     def validate_title_not_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("O título da tarefa não pode estar em branco")
-        return value
+        return ensure_title_not_blank(value)
 
 
 class TaskCreate(TaskBase):
@@ -43,9 +50,7 @@ class TaskUpdate(BaseModel):
     @field_validator("title")
     @classmethod
     def validate_title_not_blank(cls, value: Optional[str]) -> Optional[str]:
-        if value is None or not value.strip():
-            raise ValueError("O título da tarefa não pode estar em branco")
-        return value
+        return ensure_title_not_blank(value)
 
 
 class TaskOut(TaskBase):

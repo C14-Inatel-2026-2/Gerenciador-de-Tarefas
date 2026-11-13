@@ -50,6 +50,11 @@ class TestesSemMock:
                 title="Tarefa com data no passado",
                 due_date="2020-01-01T00:00:00",
             )
+            
+    def test_ensure_title_not_blank_rejeita_vazio_ou_espacos(self):
+        assert schemas.ensure_title_not_blank("Título válido") == "Título válido"
+        with pytest.raises(ValueError, match=schemas.BLANK_TITLE_ERROR):
+            schemas.ensure_title_not_blank("   ")
 
 class TestesComMock:
     def test_deletar_tarefa_com_mock_sucesso(self):
