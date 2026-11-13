@@ -206,3 +206,23 @@ Grupo C14 — Inatel — 2026/2.
 - Igor Henrique
 - João Pedro Moreira
 - Hiago Marques
+
+## Uso de IA
+
+Cada integrante descreve abaixo o próprio uso de IA ao longo do projeto.
+
+### Fernando Faluxis
+
+**Modelo utilizado:** Claude (Claude Code), em sessões de trabalho individuais, interagindo diretamente no terminal/editor com acesso ao repositório, ao GitHub (`gh` CLI) e, em alguns momentos, à extensão de navegador Claude in Chrome e ao MCP do Supabase.
+
+**Para que foi usado:** geração de código (implementação da autenticação JWT, testes automatizados, scripts de migração de banco), depuração de bugs (investigação do conflito de merge na autenticação, do bug de CORS, do roteamento SPA quebrado em produção), documentação técnica (README, histórico de commits, decisões de arquitetura) e apoio em decisões de infraestrutura (escolha de plataforma de deploy).
+
+**Dinâmica de uso:** individual, numa sessão contínua de terminal (Claude Code), não em pair programming com outro integrante. Uma vez, por não ter acesso ao MCP do Supabase nesta sessão, pedi apoio a outra sessão de Claude Code (de outro integrante, com esse acesso configurado) para consultar e migrar dados de produção — depois de eu autorizar explicitamente cada ação que mexia no banco real.
+
+**Exemplos reais de prompts e o que aconteceu com a resposta:**
+
+1. *"vamos fazer a autenticação, só uma pergunta consegue usar o mcp do supabase? conectei ele aqui"* — pedido pra implementar autenticação JWT real (cadastro, login, proteção de rotas). **Aceito**: a IA implementou `security.py`, `dependencies.py`, `routers/auth.py` e reescreveu as rotas de tarefas para exigir usuário autenticado, mas só depois de perguntar e eu confirmar decisões de escopo (JWT vs. sessão, o que ficava protegido).
+2. *"puxe as atualizações do projeto do github"* — um pedido simples de rotina que, numa das vezes, levou a IA a descobrir sozinha um bug sério (duas implementações de autenticação conflitantes mergeadas em `main`, com uma regressão de segurança real). A correção proposta foi apresentada como opções antes de qualquer ação — **aceito** depois que eu escolhi explicitamente "abrir o PR de hotfix agora" entre as alternativas sugeridas.
+3. *"ninguém deu merge no próprio pr"* — correção de um erro factual que a IA tinha escrito na documentação (afirmou que cada um mergeava o próprio PR, sem verificar). A IA checou de novo via `gh pr list` comparando autor e quem mergeou, confirmou que eu estava certo (87,5% dos PRs foram mergeados por outra pessoa) e **ajustou** o texto já publicado. Fica como exemplo de resposta de IA aceita inicialmente sem verificação suficiente, e só corrigida depois de eu questionar.
+
+**O que não foi feito por IA:** a configuração manual pelo painel web do Render (cliques e preenchimento de formulário feitos por mim, com a IA só orientando pelo que eu via em prints de tela), toda decisão de escopo e arquitetura (o que entrava em cada entrega, qual framework usar, quando autorizar uma migração em produção) e a autorização explícita de qualquer ação em dados reais (produção) — a IA nunca executou nada em produção sem eu confirmar antes.
