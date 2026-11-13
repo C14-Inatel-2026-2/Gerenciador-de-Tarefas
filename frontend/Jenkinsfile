@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        disableConcurrentBuilds()
+    }
+
     environment {
         CI = 'true'
     }
@@ -59,6 +63,32 @@ pipeline {
         stage('Archive Artifacts') {
             steps {
                 archiveArtifacts artifacts: 'frontend/dist/**', allowEmptyArchive: false, fingerprint: true
+            }
+        }
+
+        stage('Deploy Frontend') {
+            when {
+                expression {
+                    !env.CHANGE_ID && (env.BRANCH_NAME ?: env.GIT_BRANCH) in ['main', 'origin/main']
+                }
+            }
+            steps {
+                withCredentials([string(credentialsId: 'render-frontend-deploy-hook', variable: 'RENDER_DEPLOY_HOOK_URL')]) {
+                    script {
+                        if (isUnix()) {
+                            sh '''
+                                set +x
+                                curl --fail --silent --show-error --max-time 60 --request POST "$RENDER_DEPLOY_HOOK_URL&ref=$GIT_COMMIT"
+                            '''
+                        } else {
+                            bat '''
+                                @echo off
+                                curl.exe --fail --silent --show-error --max-time 60 --request POST "%RENDER_DEPLOY_HOOK_URL%&ref=%GIT_COMMIT%"
+                            '''
+                        }
+                    }
+                }
+                echo 'Deploy solicitado ao Render. Acompanhe a conclusao no painel do servico.'
             }
         }
     }

@@ -10,6 +10,8 @@ describe('Home', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 6, 12, 23, 30));
     localStorage.setItem('task-manager.session', JSON.stringify({ email: 'ana@example.com', token: 'test-token' }));
     apiTasks = [{
       id: 1,
@@ -77,6 +79,7 @@ describe('Home', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
     localStorage.clear();
@@ -200,6 +203,45 @@ describe('Home', () => {
       'http://localhost:8000/tasks/',
       expect.objectContaining({ method: 'POST' }),
     );
+  });
+
+  it('avisa sobre vencimento passado e permite corrigir a data para hoje', async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><Home /></MemoryRouter>);
+    await screen.findByRole('heading', { name: 'Revisar proposta' });
+    await user.click(screen.getByRole('button', { name: 'Nova tarefa' }));
+    const dialog = screen.getByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Título'), 'Entregar relatório');
+    const dateInput = within(dialog).getByLabelText('Data de vencimento');
+    fireEvent.change(dateInput, { target: { value: '2026-07-11' } });
+    await user.click(within(dialog).getByRole('button', { name: 'Salvar tarefa' }));
+
+    expect(within(dialog).getByRole('alert')).toHaveTextContent(
+      'Erro ao criar tarefa. A data de vencimento não pode ser anterior à data atual.',
+    );
+    expect(within(dialog).getByLabelText('Título')).toHaveValue('Entregar relatório');
+    expect(dateInput).toHaveValue('2026-07-11');
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      'http://localhost:8000/tasks/', expect.objectContaining({ method: 'POST' }),
+    );
+
+    fireEvent.change(dateInput, { target: { value: '2026-07-12' } });
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Salvar tarefa' }));
+    expect(await screen.findByRole('heading', { name: 'Entregar relatório' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it.each(['', '2026-07-13'])('permite criar tarefa com vencimento "%s"', async (date) => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><Home /></MemoryRouter>);
+    await screen.findByRole('heading', { name: 'Revisar proposta' });
+    await user.click(screen.getByRole('button', { name: 'Nova tarefa' }));
+    const dialog = screen.getByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Título'), 'Nova entrega');
+    fireEvent.change(within(dialog).getByLabelText('Data de vencimento'), { target: { value: date } });
+    await user.click(within(dialog).getByRole('button', { name: 'Salvar tarefa' }));
+    expect(await screen.findByRole('heading', { name: 'Nova entrega' })).toBeInTheDocument();
   });
 
   it('mantém o formulário aberto e mostra erro quando a API falha ao criar', async () => {
