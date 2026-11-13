@@ -76,6 +76,13 @@ export function Home() {
     }
 
     setShowMissingTitleToast(false);
+    const hoje = new Date();
+    const dataAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+    if (dataVencimento && dataVencimento < dataAtual) {
+      setCreateTaskError('Erro ao criar tarefa. A data de vencimento não pode ser anterior à data atual.');
+      return;
+    }
+
     setIsCreatingTask(true);
     setCreateTaskError('');
 
@@ -255,7 +262,10 @@ export function Home() {
                     id="task-due-date"
                     type="date"
                     value={dataVencimento}
-                    onChange={(event) => setDataVencimento(event.target.value)}
+                    onChange={(event) => {
+                      setDataVencimento(event.target.value);
+                      setCreateTaskError('');
+                    }}
                     className="field-control"
                   />
                 </div>
