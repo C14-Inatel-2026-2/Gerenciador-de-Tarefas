@@ -244,3 +244,18 @@ Cada integrante descreve abaixo o próprio uso de IA ao longo do projeto.
 3. *"no mesmo padrao dessa conversa, quero que me ajude a implementar uma trava pra n permitir criar tarefa com data anterior a atual e um teste pra isso somente no backend"* — pedido para criar a regra de negócio de validação de `due_date`. **Aceito**: a IA sugeriu usar `@field_validator("due_date")` especificamente em `TaskCreate` (e não em `TaskBase`, para não quebrar a leitura de tarefas antigas já salvas no banco quando serializadas por `TaskOut`), além dos testes unitário e de integração (`422 Unprocessable Entity`).
 
 **O que não foi feito por IA:** a aplicação manual da maior parte das alterações no código, a execução e validação da suíte de testes (`pytest`) e das migrações (`alembic`) no ambiente local, a resolução de problemas de ambiente no Windows (conflitos entre `.venv`/`venv` e dependências do Python 3.13), o controle de branches/commits/Pull Requests no Git e a revisão/merge de Pull Requests dos demais integrantes da equipe.
+
+
+**Uso de IA**
+
+### Igor Henrique
+
+**Modelo utilizado:** ChatGPT (OpenAI).
+
+**Dinâmica de uso:** utilizei o ChatGPT como assistente de desenvolvimento, solicitando implementações, explicações e soluções para problemas encontrados. As respostas foram analisadas e, quando necessário, adaptadas ao projeto.
+
+**Exemplos de prompts:**
+
+1. *"Preciso de ajuda para conectar o frontend ao backend."* — **Aceito com ajustes:** utilizei as orientações para integrar o React à API FastAPI.
+2. *"Eu gostaria de entender para que serve essa linha: `expect(fetchMock).not.toHaveBeenCalledWith(...)`."* — **Aceito:** utilizei a explicação para compreender melhor os testes automatizados.
+3. *"Para fazer o stage de deploy no meu pipeline, o que eu preciso alterar mesmo?"* — **Ajustado:** utilizei as sugestões para estruturar o estágio de deploy no Jenkins.
