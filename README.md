@@ -261,3 +261,18 @@ Cada integrante descreve abaixo o próprio uso de IA ao longo do projeto.
 1. *"Preciso de ajuda para conectar o frontend ao backend."* — **Aceito com ajustes:** utilizei as orientações para integrar o React à API FastAPI.
 2. *"Eu gostaria de entender para que serve essa linha: `expect(fetchMock).not.toHaveBeenCalledWith(...)`."* — **Aceito:** utilizei a explicação para compreender melhor os testes automatizados.
 3. *"Para fazer o stage de deploy no meu pipeline, o que eu preciso alterar mesmo?"* — **Ajustado:** utilizei as sugestões para estruturar o estágio de deploy no Jenkins.
+
+### Hiago Marques
+
+**Ferramenta utilizada:** Codex (OpenAI), em uma sessão individual com acesso ao repositório local.
+
+**Para que foi usado:** usei o Codex para conferir a entrega de refatoração do frontend. Ele comparou o PR #34 com a `main`, identificou o reaproveitamento dos rótulos de prioridade no `TaskCard` e a remoção dos mapas de classes de prioridade e status, executou os testes locais e registrou as duas mudanças neste README.
+
+**Dinâmica de uso:** pedi primeiro a análise dos commits e dos requisitos da entrega. Recebi o resultado com o que faltava documentar e com os limites da verificação do Jenkins. Em seguida, pedi que o Codex adicionasse as duas entradas e me mostrasse o diff antes de publicar o commit na minha branch.
+
+**Exemplos reais de prompts e o que aconteceu com a resposta:**
+
+1. *"compare os commits meus para esse exercicio, e verifique se esta tudo de acordo"* — o Codex identificou duas refatorações no meu PR e comparou os testes locais antes e depois. A análise também apontou uma falha de coleta dos testes do backend que já existia na `main` e informou que a execução histórica do Jenkins não pôde ser confirmada.
+2. *"cheque se atualizaram a main, e coloque os dois meus refatorigs, e me mostre para eu revisar"* — o Codex conferiu a `main`, adicionou as duas linhas com o link do PR #34 e me mostrou o diff. Depois da revisão, pedi que publicasse o commit na `feature-Frontend`.
+
+**O que ficou comigo:** defini o escopo da revisão, aprovei as entradas do README e autorizei o envio para minha branch. A abertura do pull request ficou comigo.
